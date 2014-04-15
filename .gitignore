@@ -13,6 +13,8 @@
 hs_err_pid*
 
 ## Eclipse .gitignore
+.project
+.classpath
 
 *.pydevproject
 .metadata
