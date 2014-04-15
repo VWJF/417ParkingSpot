@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns="http://java.sun.com/xml/ns/javaee"
+xmlns:web="http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+xsi:schemaLocation="http://java.sun.com/xml/ns/javaee
+http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
+
+  <welcome-file-list>
+		<!-- <welcome-file>index.html</welcome-file> -->
+		<welcome-file>jsp/welcome.jsp</welcome-file>
+	</welcome-file-list>
+    
+	<servlet-mapping>
+        <servlet-name>my_account</servlet-name>
+        <url-pattern>/my_account/*</url-pattern>
+    </servlet-mapping>
+    
+	<servlet-mapping>
+        <servlet-name>find_spots</servlet-name>
+        <url-pattern>/find_spots/*</url-pattern>
+    </servlet-mapping>    
+    
+    <servlet-mapping>
+        <servlet-name>rent_out_spots</servlet-name>
+        <url-pattern>/rent_out_spots/*</url-pattern>
+    </servlet-mapping>
+        
+    <servlet>
+        <servlet-name>my_account</servlet-name>
+		<jsp-file>/jsp/my_account.jsp</jsp-file>
+    </servlet>
+    
+	<servlet>
+        <servlet-name>find_spots</servlet-name>
+		<jsp-file>/jsp/find_spots.jsp</jsp-file>
+    </servlet>
+    
+    <servlet>
+        <servlet-name>rent_out_spots</servlet-name>
+		<jsp-file>/jsp/rent_out_spots.jsp</jsp-file>
+    </servlet>
+    
+
+
+	
+	
+	
+
+</web-app>
