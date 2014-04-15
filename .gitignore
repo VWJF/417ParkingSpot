@@ -1,3 +1,7 @@
+## For Java Persistence API (Data Store Persistence)
+parking/war/WEB-INF/classes/META-INF/*
+parking/src/META-INF/*
+
 ## Java .gitignore
 *.class
 
