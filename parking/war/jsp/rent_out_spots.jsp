@@ -19,11 +19,14 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" /> 
     <meta charset="utf-8">       
     <link type="text/css" rel="stylesheet" href="/stylesheets/style.css" />
+    <link type="text/css" rel="stylesheet" href="/stylesheets/rent_out_spots.css" />
+    <link type="text/css" rel="stylesheet" href="/stylesheets/parking_map.css" />
     <script type="text/javascript"
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUiC6DA0eL6xBGKpnbmvvgW8JazAZNIAM&sensor=true">
     </script>   
     <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' type='text/javascript'></script>  
-    
+    <script src='javascripts/rent_out_spots.js' type='text/javascript'></script>  
+	    
   </head>
   <body>
   
@@ -45,7 +48,12 @@
 
 	<t:page_template>
 		<jsp:attribute name="main_content">
-			#WRITE HERE#
+		    <label for='address'>Address of your parking Spot</label><br>
+			<input type='text' id='address' name='address'>
+			<button type='button' id='submit_address'>Search</button>
+			
+			<br><br>
+			<div id='map_canvas'></div>
 		
  		</jsp:attribute>
 	</t:page_template>

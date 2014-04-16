@@ -19,7 +19,7 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" /> 
     <meta charset="utf-8">       
     <link type="text/css" rel="stylesheet" href="/stylesheets/style.css" />
-    <link type="text/css" rel="stylesheet" href="/stylesheets/find_spots.css" />
+    <link type="text/css" rel="stylesheet" href="/stylesheets/parking_map.css" />
     
     <script type="text/javascript"
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUiC6DA0eL6xBGKpnbmvvgW8JazAZNIAM&sensor=true">
@@ -51,6 +51,7 @@
 				<input type="date" id="start_date" required>
 				<label for='start_time'> Hour</label>
 				<select id ='start_time' name='start_time'>
+				 	 <option value="00">00:00  </option>
  					 <option value="01">01:00  </option>
   					 <option value="02">02:00 </option>
   					 <option value="03">03:00 </option>
@@ -74,14 +75,13 @@
   					 <option value="21">21:00 </option>
   					 <option value="22">22:00 </option>
   					 <option value="23">23:00 </option>
-  					 <option value="24">24:00 </option>
 				</select>
 				<br><br>
 				<label for = "end_date">End Date&nbsp;</label>
 				<input type="date" id="end_date" required>
 				<label for='end_time'> Hour</label>
 				<select id='end_time' name ="end_time">
- 					 <option value="01">01:00  </option>
+ 					 <option value="00">00:00  </option>
   					 <option value="02">02:00 </option>
   					 <option value="03">03:00 </option>
   					 <option value="04">04:00 </option>
