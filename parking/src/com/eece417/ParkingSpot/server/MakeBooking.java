@@ -6,8 +6,12 @@ import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
+import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
+import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
+import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
+import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
@@ -27,6 +31,7 @@ public class MakeBooking extends HttpServlet {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
+	private Date current_time = new Date(0);
 	/**
 	 * Booking(booking_id, username, ParkingSpot, start_Date-Time, end_Date-Time)
 	 * ParkingSpot(parking_spot_id, latitude, longitude, price, owner)
@@ -52,7 +57,7 @@ public class MakeBooking extends HttpServlet {
         
         Date start_time = (Date) req.getAttribute("start_time");
         Date end_time = (Date) req.getAttribute("end_time");
-        Date current_time = new Date();  //Date current_time = (Date) req.getAttribute("current_time");
+        this.current_time = new Date();  //Date current_time = (Date) req.getAttribute("current_time");
 
 
         //Get a ParkingSpot Entity from Datastore that matches (latitude, longitude)
@@ -69,6 +74,7 @@ public class MakeBooking extends HttpServlet {
         //Create a new Booking entity.
         Entity booking = new Entity("Booking", BookingKey);
         booking.setProperty("user", user);
+        booking.setProperty("username", username);
         booking.setProperty("parkingspot", parkingSpot);
         booking.setProperty("start_time", start_time);
         booking.setProperty("end_time", end_time);
@@ -76,12 +82,13 @@ public class MakeBooking extends HttpServlet {
         booking.setProperty("lat", latPosition);
         booking.setProperty("lng", lngPosition);
         
-        // Check for conflicts with other Bookings
-        // TODO:
+        // Check for conflicts with other Bookings, add the Booking to the datastore if it is conflict free.
+        // TODO: Check based on start_time, end_time, current_time
+        if( conflictFreeBooking(booking, ParkingSpotName) ){
+        	DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        	datastore.put(booking);
+        }
         
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        datastore.put(booking);
-
         resp.sendRedirect("/find_spots.jsp?parkingSpotName=" + ParkingSpotName);
     }
 
@@ -97,7 +104,7 @@ public class MakeBooking extends HttpServlet {
 		 * @return 
 		 * @throws IOException
 		 */
-		private Entity getParkingSpots(String latPosition, String lngPosition, String ParkingSpotApp)
+		private Entity getParkingSpots(String latPosition, String lngPosition, String ParkingSpotName)
 				throws IOException {
 			
 	        //String ParkingSpotApp = req.getParameter("ParkingSpotApp");
@@ -110,7 +117,7 @@ public class MakeBooking extends HttpServlet {
 	        String queryParameters = "[lat->"+latPosition+"] [lng->"+lngPosition+"]";
 	        
 	        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-	        Key ParkingSpotAppKey = KeyFactory.createKey("ParkingSpot", ParkingSpotApp);
+	        Key ParkingSpotAppKey = KeyFactory.createKey("ParkingSpot", ParkingSpotName);
 	        
 	        // Run an ancestor query to ensure we see the most up-to-date
 	        // view of the Greetings belonging to the selected Guestbook.
@@ -126,7 +133,7 @@ public class MakeBooking extends HttpServlet {
 	        String allParkingSpots = "";
 	        
 	        if (ParkingSpots.isEmpty()) {
-	        	System.out.println(ParkingSpotApp + "ParkingSpots not found matching: "+queryParameters);
+	        	System.out.println(ParkingSpotName + "ParkingSpots not found matching: "+queryParameters);
 	        } else {
 	        	firstSpot = ParkingSpots.get(0);
 
@@ -149,6 +156,119 @@ public class MakeBooking extends HttpServlet {
 	        }
 	        System.out.println(allParkingSpots);
 	        return firstSpot;
+		}
+		
+		/**
+		 * Helper method that queries the Datastore for Booking entities and compares the results with the 
+		 * provided Booking Entity. Uses Booking attributes start_time, end_time and ParkingSpot to determine conflicts.
+		 * Return false if a conflicting Booking is found. 
+		 * Returns true if a conflicting Booking is not found.
+		 * 
+		 * @param checkBooking
+		 * @param ParkingSpotName
+		 * @return
+		 * @throws IOException
+		 */
+		private boolean conflictFreeBooking(Entity checkBooking, String ParkingSpotName)
+				throws IOException {
+	        
+			// TODO: Check if the provided Entity if of type Booking ??			
+			//
+			
+			// Retrieve information from Booking Entity 
+			
+			User booking_user = (User) checkBooking.getProperty("user");
+			String booking_username = (String) checkBooking.getProperty("username");
+			
+			Entity booking_parkingSpot = (Entity) checkBooking.getProperty("parkingspot");
+			Date booking_start_time = (Date) checkBooking.getProperty("start_time");
+			Date booking_end_time = (Date) checkBooking.getProperty("end_time");
+
+			String booking_lat = (String) checkBooking.getProperty("lat");
+			String booking_lng = (String) checkBooking.getProperty("lng");
+
+			 String BookingStructure = "Booking(booking_id, username, ParkingSpot, start_Date-Time, end_Date-Time)"; 
+		        System.out.println(BookingStructure +"\n"
+		        				+ booking_user + ": Booking(" + booking_username + ", ParkingSpot:(" + booking_lat + ", " + booking_lng+"), "
+		        				+booking_start_time+", "+booking_end_time+", "+current_time +")\n");
+	        	        
+	        // Filters to compare attributes in the data store and with an attribute from provided Booking.
+	        // A property of a Booking entity from the Data-store is (<=,>=,==) to the property of the Booking provided.
+	        // TODO: Check logic (greater than vs greater than or equal).
+	        Filter parkingSpotFilter =
+	        		new FilterPredicate("ParkingSpot",
+	        				FilterOperator.EQUAL,
+	        				booking_parkingSpot);
+	        
+	        Filter startAboveMinFilter =
+	        		new FilterPredicate("start_time",
+	        				FilterOperator.LESS_THAN_OR_EQUAL,
+	        				booking_start_time);
+
+	        Filter startBelowMinFilter =
+	        		new FilterPredicate("start_time",
+	        				FilterOperator.GREATER_THAN_OR_EQUAL,
+	        				booking_start_time);
+
+	        Filter endAboveMaxFilter =
+	        		new FilterPredicate("end_time",
+	        				FilterOperator.LESS_THAN_OR_EQUAL,
+	        				booking_end_time);
+	        
+	        Filter endBelowMaxFilter =
+	        		new FilterPredicate("end_time",
+	        				FilterOperator.GREATER_THAN_OR_EQUAL,
+	        				booking_end_time);
+	        /*****/
+	        Filter startAboveMaxFilter =
+	        		new FilterPredicate("end_time",
+	        				FilterOperator.LESS_THAN_OR_EQUAL,
+	        				booking_start_time);
+
+	        Filter startBelowMaxFilter =
+	        		new FilterPredicate("end_time",
+	        				FilterOperator.GREATER_THAN_OR_EQUAL,
+	        				booking_start_time);
+
+	        Filter endAboveMinFilter =
+	        		new FilterPredicate("start_time",
+	        				FilterOperator.LESS_THAN_OR_EQUAL,
+	        				booking_end_time);
+	        
+	        Filter endBelowMinFilter =
+	        		new FilterPredicate("start_time",
+	        				FilterOperator.GREATER_THAN_OR_EQUAL,
+	        				booking_end_time);
+	        
+	        // Construct filters that detect conflicting Bookings. 
+	        // Filters will obtain the Conflicting Bookings, 
+	        // if 0 Bookings match the filters, then Conflicting Bookings DO NOT EXIST.
+	        // if >0 Bookings match the filters, then Conflicting Bookings EXIST.
+
+	        Filter startRangeConflictFilter =
+	        		  CompositeFilterOperator.and(startAboveMinFilter, startBelowMaxFilter);
+	        
+	        Filter endRangeConflictFilter =
+	        		  CompositeFilterOperator.and(endBelowMaxFilter, endAboveMinFilter);
+	        
+
+	        Filter parkingSpotWithStartRangeConflict =
+	        		  CompositeFilterOperator.and(parkingSpotFilter, startRangeConflictFilter);
+	        
+	        Filter parkingSpotWithEndRangeConflict =
+	        		  CompositeFilterOperator.and(parkingSpotFilter, endRangeConflictFilter);
+	        
+	        Filter conflictFilter =
+	        		  CompositeFilterOperator.or(parkingSpotWithStartRangeConflict, parkingSpotWithEndRangeConflict);
+
+	        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+	        Query q = new Query("Booking").setFilter(conflictFilter);
+	        PreparedQuery pq = datastore.prepare(q);
+	       
+	        if(pq.asIterator().hasNext())
+	        	return false;
+	        else
+	        	return true;
 		}
 		
 		/**
