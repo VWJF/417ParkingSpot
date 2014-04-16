@@ -38,8 +38,8 @@ parking/src/META-INF/*
 hs_err_pid*
 
 ## Eclipse .gitignore
-parking/.project
-parking/.classpath
+.project
+.classpath
 
 *.pydevproject
 .metadata
