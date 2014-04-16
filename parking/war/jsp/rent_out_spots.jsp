@@ -25,6 +25,7 @@
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUiC6DA0eL6xBGKpnbmvvgW8JazAZNIAM&sensor=true">
     </script>   
     <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' type='text/javascript'></script>  
+    <script src='javascripts/parking_map.js' type='text/javascript'></script>  
     <script src='javascripts/rent_out_spots.js' type='text/javascript'></script>  
 	    
   </head>
