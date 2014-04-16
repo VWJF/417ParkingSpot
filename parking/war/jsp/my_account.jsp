@@ -20,10 +20,13 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" /> 
     <meta charset="utf-8">       
     <link type="text/css" rel="stylesheet" href="/stylesheets/style.css" />
+    <link type="text/css" rel="stylesheet" href="/stylesheets/my_account.css" />
     <script type="text/javascript"
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUiC6DA0eL6xBGKpnbmvvgW8JazAZNIAM&sensor=true">
     </script>   
-    <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' type='text/javascript'></script>  
+    <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' type='text/javascript'></script>
+    <script src='/javascripts/my_account.js' type='text/javascript'></script>
+    
     
   </head>
   <body>
@@ -48,8 +51,8 @@
 
 		<jsp:attribute name="main_content">
 
-		
-			#WRITE HERE#
+			hi <br>
+			<label id="userName" style="color:red"> hi </label>
 		
  		</jsp:attribute>
 	</t:page_template>
