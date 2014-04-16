@@ -2,7 +2,7 @@
 
 # gwt caches and compiled units #
 #parking/war/[gwt project name]/
-#parking/war/eece417isthebest/
+parking/war/parking/
 parking/gwt-unitCache/
 parking/test-classes/
 parking/www-test/
