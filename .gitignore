@@ -1,3 +1,24 @@
+##<<Taken from http://witterk.blogspot.ca/2012/05/gitignore-for-gwt-and-java-app-engine.html
+
+# gwt caches and compiled units #
+#parking/war/[gwt project name]/
+#parking/war/eece417isthebest/
+parking/gwt-unitCache/
+parking/test-classes/
+parking/www-test/
+
+# boilerplate generated classes #
+*/.apt_generated/
+
+# more caches and things from deploy #
+parking/war/WEB-INF/deploy/
+parking/war/WEB-INF/classes/
+
+# App engine generated #
+parking/war/WEB-INF/appengine-generated/
+
+##>>
+
 ## For Java Persistence API (Data Store Persistence)
 parking/war/WEB-INF/classes/META-INF/*
 parking/src/META-INF/*
