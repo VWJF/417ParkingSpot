@@ -17,14 +17,14 @@ parking/src/META-INF/*
 hs_err_pid*
 
 ## Eclipse .gitignore
-.project
-.classpath
+parking/.project
+parking/.classpath
 
 *.pydevproject
 .metadata
 .gradle
-bin/
-tmp/
+parking/bin/
+parking/tmp/
 *.tmp
 *.bak
 *.swp
