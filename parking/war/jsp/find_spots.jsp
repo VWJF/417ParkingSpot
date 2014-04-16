@@ -42,7 +42,7 @@
  					 <option value="current_location">Current Location</option>
   					 <option value="by_address">By Address</option>
 				</select>
-				<input name='address_search_bar' type='text' placeholder='Address' disabled/>
+				<input name='address_search_bar' id='address_search_bar' type='text' placeholder='Address' disabled/>
 				
 				<p> I want to find parking between: </p>
 				<!--  Choose date -->
