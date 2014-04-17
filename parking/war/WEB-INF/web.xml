@@ -16,11 +16,11 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <url-pattern>/rent_out_servlet/*</url-pattern>
     </servlet-mapping>
 
-    <servlet-mapping>
+ <!--  <servlet-mapping>
         <servlet-name>make_booking_servlet</servlet-name>
         <url-pattern>/make_booking_servlet/*</url-pattern>
     </servlet-mapping>
-    
+-->       
       <servlet-mapping>
         <servlet-name>make_booking</servlet-name>
         <url-pattern>/make_booking/*</url-pattern>
@@ -32,47 +32,41 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <url-pattern>/my_account/*</url-pattern>
     </servlet-mapping>
     
-<!-- <servlet-mapping>
+	<servlet-mapping>
         <servlet-name>find_spots</servlet-name>
         <url-pattern>/find_spots/*</url-pattern>
     </servlet-mapping>    
- -->    
+        
     <servlet-mapping>
         <servlet-name>rent_out_spots</servlet-name>
         <url-pattern>/rent_out_spots/*</url-pattern>
     </servlet-mapping>
-<<<<<<< HEAD
+
             
      <servlet-mapping>
         <servlet-name>make_booking</servlet-name>
         <url-pattern>/make_booking/*</url-pattern>
     </servlet-mapping>
-    
-=======
-        
+            
   
->>>>>>> master
 <!-- Java Servlets  -->
     
     <servlet>
         <servlet-name>rent_out_servlet</servlet-name>
         <servlet-class>parking.RentOutServlet</servlet-class>
     </servlet>
-<<<<<<< HEAD
 
-    <servlet>
+<!--    <servlet>
         <servlet-name>make_booking_servlet</servlet-name>
         <servlet-class>com.eece417.ParkingSpot.server.MakeBooking</servlet-class>
     </servlet>
-    
-=======
+-->    
        
        
     <servlet>
         <servlet-name>make_booking</servlet-name>
         <servlet-class>parking.MakeBookingServlet</servlet-class>
     </servlet>
->>>>>>> master
 <!-- JSP -->      
  
 
@@ -81,21 +75,21 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<jsp-file>/jsp/my_account.jsp</jsp-file>
     </servlet>
     
-<!-- 	<servlet>
+ 	<servlet>
         <servlet-name>find_spots</servlet-name>
 		<jsp-file>/jsp/find_spots.jsp</jsp-file>
     </servlet>
- -->    
+    
     <servlet>
         <servlet-name>rent_out_spots</servlet-name>
 		<jsp-file>/jsp/rent_out_spots.jsp</jsp-file>
     </servlet>
     
-    <servlet>
+<!--    <servlet>
         <servlet-name>make_booking</servlet-name>
 		<jsp-file>/jsp/make_booking.jsp</jsp-file>
     </servlet>
-
+-->
 	
 	
 	

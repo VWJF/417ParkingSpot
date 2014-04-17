@@ -2,7 +2,9 @@ package parking;
 
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
+import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.Entity;
+import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
@@ -37,14 +39,17 @@ public class MakeBookingServlet extends HttpServlet {
 	 * 
 	 */
 	
+	private DatastoreService datastore;
 	private static final long serialVersionUID = 1L;
 	private Date current_time = new Date(0);
+
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
 
-		
+		datastore = DatastoreServiceFactory.getDatastoreService();
+
 		UserService userService = UserServiceFactory.getUserService();
 		User user = userService.getCurrentUser();
 
@@ -65,52 +70,84 @@ public class MakeBookingServlet extends HttpServlet {
 	    long start_date_ms = Long.parseLong(req.getParameter("end_date_hours"));
 
 		
-		//Entity parentParkingSpot = getParkingSpots(latPosition, lngPosition); //FIXME:Test without this line first
-		//Key BookingKey = KeyFactory.createKey("Booking", parentParkingSpot.getKey()); //FIXME:Test without this line first
-
-
 		//Create a new Booking entity.
 		String booking_key = user +"_" + start_date_ms_str + "_" + end_date_ms_str;
-		Key BookingKey = KeyFactory.createKey("Booking", booking_key);
+		//Key BookingKey = KeyFactory.createKey("Booking", booking_key);
 
-		//TODO: need checking and stuff for no conflict
-		Entity booking = new Entity("Booking", BookingKey);
+		String parking_key = latitude_str + "_" + longitude_str;
+		Entity parentParkingSpot = getParkingSpots(latitude_str, longitude_str); 
+		
+		boolean success = false;
+
+		if(parentParkingSpot == null){
+			System.out.println("doPost(): ParkingSpot Not found.");
+			
+			generateJSONResponse(resp, success);
+			return;
+		}
+		
+		//Entity booking = new Entity("Booking", "parkingspot", parentParkingSpot.getKey());
+		//Entity booking = new Entity("Booking", parentParkingSpot.getKey());
+
+		Key ancestor_path = new KeyFactory.Builder(parentParkingSpot.getKey())
+        									.addChild("Booking", booking_key)
+        									.getKey();
+
+		Entity booking = new Entity("Booking", ancestor_path); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
+		
+		/*deprecated:
+		 * embeddedParkingspotWithBooking(parentParkingSpot, booking);
+		 * */
+		
 		booking.setProperty("user", user);
+		//booking.setProperty("booking_key", BookingKey);
 		booking.setProperty("latitude", latitude);
 		booking.setProperty("longitude", longitude);
 		booking.setProperty("start_date_ms", start_date_ms);
 		booking.setProperty("end_date_ms", end_date_ms);
 		
-		boolean success = false;
-
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		datastore.put(booking);
-		success = true;
-		JSONObject resultJson = new JSONObject();
-		try {
-			resultJson.put("status", success);
-			resp.setContentType("json");
-			resp.getWriter().println(resultJson);     
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
 		
-		/*
 		// Check for conflicts with other Bookings, add the Booking to the datastore if it is conflict free.
-		boolean success = false;
+		
+		Key datatore_booking_key = null;
 
-		try{ //FIXME:Test without try{..}catch{..} line first
-			if( false && isConflictFreeBooking(booking) ){
-
-				DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-				datastore.put(booking);
-				success = true;
-			}
-		}catch(IllegalArgumentException e){
-			System.out.println("## Error: Booking not saved.");
-			System.out.println("MakeBooking.doPost() conflictFreeBooking()"+e.getLocalizedMessage());
+		if( isConflictFreeBooking(parentParkingSpot.getKey(), user, latitude, longitude, start_date_ms, end_date_ms ) ){
+			datatore_booking_key = datastore.put(booking);
+			success = true;
+		}
+		else{
+			success = false;
 		}
 
+		
+		System.out.println("Booking(" + user + ", ParkingSpot:(" + latitude + ", " + longitude+"), "
+							+start_date_ms+", "+end_date_ms+") "+current_time +" : "+ parentParkingSpot.getProperty("address") );
+		System.out.println("parkingSpot.getKey(): "+ KeyFactory.keyToString(parentParkingSpot.getKey()));
+		try {
+			System.out.println("booking.getKey() "+KeyFactory.keyToString(datatore_booking_key));
+			System.out.println("booking.getKey().getParent() "+KeyFactory.keyToString( datastore.get(datatore_booking_key).getParent() ));
+		} catch (EntityNotFoundException | NullPointerException e) {
+			if(e instanceof NullPointerException)
+				System.out.println("Booking: isConflictFreeBooking failed.");
+			if(e instanceof EntityNotFoundException)
+				System.out.println("Not able to retrive inserted Booking.");
+		}
+	
+		System.out.println("doPost(): Booking complete with status = ("+success+").");
+		
+		//success = true;
+		generateJSONResponse(resp, success);
+		
+	}
+
+
+	/**
+	 * @param resp
+	 * @param success
+	 * @throws IOException
+	 */
+	private void generateJSONResponse(HttpServletResponse resp, boolean success)
+			throws IOException {
 		JSONObject resultJson = new JSONObject();
 		try {
 			resultJson.put("status", success);
@@ -119,107 +156,100 @@ public class MakeBookingServlet extends HttpServlet {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		*/
 	}
 
 
 	/**
 	 * 
 	 * Given the identifiers of a ParkingSpot, retrieve from the Datastore the ParkingSpots that match.
-	 * If multiple ParkingSpots are found, returns the first found with the lowest "price".
 	 * 
 	 * ParkingSpot(parking_spot_id, latitude, longitude, price, owner)
-	 * @param String latPosition
-	 * @param String lngPosition
-	 * @param String ParkingSpotApp
+	 * @param String latitude_str
+	 * @param String longitude_str
 	 * @return 
 	 * @throws IOException
 	 */
-	private Entity getParkingSpots(String lat_str, String long_str)
+	private Entity getParkingSpots(String latitude_str, String longitude_str)
 			throws IOException {
 
 
-		String parking_spot_parameters = "[lat->"+lat_str+"] [lng->"+long_str+"]";
+		String parking_spot_parameters = "[lat->"+latitude_str+"] [lng->"+longitude_str+"]";
 
-		String master_key = lat_str + "_" + long_str;
+		String master_key = latitude_str + "_" + longitude_str;
 
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Key ParkingSpotAppKey = KeyFactory.createKey("parkingspot", master_key);
+		Key ParkingSpotKey = KeyFactory.createKey("parkingspot", master_key);
 
 		// Run an ancestor query to ensure we see the most up-to-date
 		// view of the Greetings belonging to the selected Guestbook.
 
-		Query query = new Query("ParkingSpot", ParkingSpotAppKey);
-		query.addSort("hourly_rate", Query.SortDirection.DESCENDING);
-		//Add a filter for a specific ParkingSpot(lat,lng)
-		query.setFilter(FilterOperator.EQUAL.of("latitude",lat_str)).setFilter(FilterOperator.EQUAL.of("longitude",long_str));
+		Query query = new Query("parkingspot", ParkingSpotKey);
+		
+		
+		List<Entity> parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(1));
+		if(parkingSpot.size() == 1){
+			Entity parking = parkingSpot.get(0);
+			String owner = parking.getProperty("owner").toString();
+			String addr = parking.getProperty("address").toString();
+			String lat = parking.getProperty("latitude").toString();
+			String lng = parking.getProperty("longitude").toString();
+			String hourly_rate = parking.getProperty("hourly_rate").toString();
 
-		List<Entity> ParkingSpots = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
-
-		Entity firstSpot = null;
-		String allParkingSpots = "";
-
-		if (ParkingSpots.isEmpty()) {
-			System.out.println(master_key + "ParkingSpots not found matching: "+parking_spot_parameters);
-		} else {
-			firstSpot = ParkingSpots.get(0);
-
-			String ParkingStructure = "number, ParkingSpot(parking_spot_id, latitude, longitude, price, owner)";
-
-			allParkingSpots = "Found ParkingSpots with parameters:" + parking_spot_parameters + "\n";
-			allParkingSpots += ParkingStructure +"\n";
-
-			int i = 0;
-			for (Entity parking : ParkingSpots) {
-				String lat = parking.getProperty("latitude").toString();
-				String lng = parking.getProperty("longitude").toString();
-				String price = parking.getProperty("price").toString();
-				String owner = parking.getProperty("owner").toString();
-
-				String entity = "#"+ i + "null, (" +lat + "," + lng + ") $" + price + ", " + owner; 
-				allParkingSpots += entity +"\n";
-				i++;
-			}
+			String entity = "  ParkingSpot: "+ owner + " (" +lat + "," + lng + ") $" + hourly_rate + ", " + addr; 
+			System.out.println(entity);
+			
+			return parkingSpot.remove(0);
 		}
-		System.out.println(allParkingSpots);
-		return firstSpot;
+		System.out.println("  Parking Spot "+parking_spot_parameters+" Not found");
+		return null;
+		
 	}
 
 	/**
 	 * Helper method that queries the Datastore for Booking entities and compares the results with the 
-	 * provided Booking Entity. Uses Booking attributes start_time, end_time and ParkingSpot to determine conflicts.
+	 * provided Booking entity parameters provided. 
+	 * Uses Booking attributes start_time, end_time and ParkingSpot(latitude, longitude) to determine conflicts.
 	 * Return false if a conflicting Booking is found. 
 	 * Returns true if a conflicting Booking is not found.
-	 * 
-	 * @param checkBooking
-	 * @param ParkingSpotName
+	 * @param booking_key
+	 * @param booking_user
+	 * @param booking_lat
+	 * @param booking_lng
+	 * @param booking_start_time
+	 * @param booking_end_time
 	 * @return
 	 * @throws IOException
+	 * @throws IllegalArgumentException
 	 */
-	private boolean isConflictFreeBooking(Entity checkBooking)
-			throws IOException, IllegalArgumentException {
+	private boolean isConflictFreeBooking(Key parent_key, User booking_user, double booking_lat, double booking_lng, long booking_start_time, long booking_end_time )
+			throws IOException {
 
-		// TODO: Check if the provided Entity if of type Booking ??			
-		//
-		if (checkBooking.getKind() == "Booking"){
-			throw new IllegalArgumentException("Entity Kind should be \"Booking\"");
+		System.out.println("    Starting isConflictFreeBooking()");
+		
+		System.out.println("    Booking(" + booking_user + ", ParkingSpot:(" + booking_lat + ", " + booking_lng+"), "
+								+booking_start_time+", "+booking_end_time+", "+current_time +")");
+		System.out.println("    parent.getKey(): "+ KeyFactory.keyToString(parent_key));
+
+
+		//FIXME:Currently, datastore is checked for existing Bookings with the provided parent_key for a ParkingSpot.
+
+		Query query = new Query("Booking", parent_key);	
+		List<Entity> booked_parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(1));
+
+		if(booked_parkingSpot.size() == 0){
+			System.out.println("    isConflictFreeBooking(): Previous ParkingSpot Not found.");
+
+			return true;
 		}
+		System.out.println("    parkingSpot.getKey(): "+ KeyFactory.keyToString(booked_parkingSpot.get(0).getKey()));
+		System.out.println("    isConflictFreeBooking(): Previous ParkingSpot Found.");
 
-		// Retrieve information from Booking Entity 
+		return false;
 
-		User booking_user = (User) checkBooking.getProperty("user");
-
-		Entity booking_parkingSpot = (Entity) checkBooking.getProperty("parkingspot");
-		Date booking_start_time = (Date) checkBooking.getProperty("start_time");
-		Date booking_end_time = (Date) checkBooking.getProperty("end_time");
-
-		String booking_lat = (String) checkBooking.getProperty("latitude");
-		String booking_lng = (String) checkBooking.getProperty("longitude");
-
-		String BookingStructure = "Booking(booking_id, username, ParkingSpot, start_Date-Time, end_Date-Time)"; 
-		System.out.println(BookingStructure +"\n"
-				+ booking_user + ": Booking(" + booking_user + ", ParkingSpot:(" + booking_lat + ", " + booking_lng+"), "
-				+booking_start_time+", "+booking_end_time+", "+current_time +")\n");
+/*		
+		//FIXME: Incomplete:....
+		//....Problem with Filter in Query.setFilter(Filter). Filter can only operate on one property. We want to Filter by two properties (i.e. start_date & end_date)
+		
+		
 
 		// Filters to compare attributes in the data store and with an attribute from provided Booking.
 		// A property of a Booking entity from the Data-store is (<=,>=,==) to the property of the Booking provided.
@@ -230,42 +260,42 @@ public class MakeBookingServlet extends HttpServlet {
 						booking_parkingSpot);
 
 		Filter startAboveMinFilter =
-				new FilterPredicate("start_time",
+				new FilterPredicate("start_date_ms",
 						FilterOperator.LESS_THAN_OR_EQUAL,
 						booking_start_time);
 
 		Filter startBelowMinFilter =
-				new FilterPredicate("start_time",
+				new FilterPredicate("start_date_ms",
 						FilterOperator.GREATER_THAN_OR_EQUAL,
 						booking_start_time);
 
 		Filter endAboveMaxFilter =
-				new FilterPredicate("end_time",
+				new FilterPredicate("end_date_ms",
 						FilterOperator.LESS_THAN_OR_EQUAL,
 						booking_end_time);
 
 		Filter endBelowMaxFilter =
-				new FilterPredicate("end_time",
+				new FilterPredicate("end_date_ms",
 						FilterOperator.GREATER_THAN_OR_EQUAL,
 						booking_end_time);
-		/*****/
+		//////////////
 		Filter startAboveMaxFilter =
-				new FilterPredicate("end_time",
+				new FilterPredicate("end_date_ms",
 						FilterOperator.LESS_THAN_OR_EQUAL,
 						booking_start_time);
 
 		Filter startBelowMaxFilter =
-				new FilterPredicate("end_time",
+				new FilterPredicate("end_date_ms",
 						FilterOperator.GREATER_THAN_OR_EQUAL,
 						booking_start_time);
 
 		Filter endAboveMinFilter =
-				new FilterPredicate("start_time",
+				new FilterPredicate("start_date_ms",
 						FilterOperator.LESS_THAN_OR_EQUAL,
 						booking_end_time);
 
 		Filter endBelowMinFilter =
-				new FilterPredicate("start_time",
+				new FilterPredicate("start_date_ms",
 						FilterOperator.GREATER_THAN_OR_EQUAL,
 						booking_end_time);
 
@@ -290,15 +320,14 @@ public class MakeBookingServlet extends HttpServlet {
 		Filter conflictFilter =
 				CompositeFilterOperator.or(parkingSpotWithStartRangeConflict, parkingSpotWithEndRangeConflict);
 
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Query q = new Query("Booking").setFilter(conflictFilter);
+		Query q = new Query("Booking").setAncestor(ancestorKey).setFilter(conflictFilter);
 		PreparedQuery pq = datastore.prepare(q);
 
 		if(pq.asIterator().hasNext())
 			return false;
 		else
 			return true;
-	}
+*/	}
 
 	/**
 	 * Helper method that converts a (pre-formated) Date representation into a Date Object to be stored in DataStore.
@@ -327,7 +356,7 @@ public class MakeBookingServlet extends HttpServlet {
 	 * to be saved in the Datastore.
 	 * @return
 	 */
-	private String getCurrentTime(){
+	private String getCurrentTimeFormatted(){
 
 		Date dNow = new Date();
 		SimpleDateFormat ft = 
@@ -335,6 +364,26 @@ public class MakeBookingServlet extends HttpServlet {
 
 		System.out.println("Current Date: " + ft.format(dNow));
 		return ft.format(dNow);
+	}
+	
+	/**
+	 * Alternative_#2 to ParentEntity = ParkingSpot
+	 * Properties of an embedded entity are not indexed and cannot be used in queries.
+	 * You can optionally associate a key with an embedded entity, but (unlike a full-fledged entity)
+	 * the key is not required and, even if present, cannot be used to retrieve the entity.
+	 * @param parentParkingSpot
+	 * @param booking
+	 */
+	private void embeddedParkingspotWithBooking(Entity parentParkingSpot,
+			Entity booking) {
+
+
+		EmbeddedEntity embeddedParkngSpot = new EmbeddedEntity();
+
+		embeddedParkngSpot.setKey(parentParkingSpot.getKey());
+		embeddedParkngSpot.setPropertiesFrom(parentParkingSpot);
+
+		booking.setProperty("parkingspot", embeddedParkngSpot);
 	}
 
 }
