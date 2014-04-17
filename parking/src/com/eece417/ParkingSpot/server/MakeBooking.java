@@ -94,7 +94,7 @@ public class MakeBooking extends HttpServlet {
         boolean success = false;
 
         try{ //FIXME:Test without try{..}catch{..} line first
-        	if( true ){//&& isConflictFreeBooking(booking) ){
+        	if( true && isConflictFreeBooking(booking) ){
 
         		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         		datastore.put(booking);

@@ -15,6 +15,11 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <servlet-name>rent_out_servlet</servlet-name>
         <url-pattern>/rent_out_servlet/*</url-pattern>
     </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>make_booking_servlet</servlet-name>
+        <url-pattern>/make_booking_servlet/*</url-pattern>
+    </servlet-mapping>
     
 <!-- JSP Mapping  -->
 
@@ -23,11 +28,11 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <url-pattern>/my_account/*</url-pattern>
     </servlet-mapping>
     
-	<servlet-mapping>
+<!-- <servlet-mapping>
         <servlet-name>find_spots</servlet-name>
         <url-pattern>/find_spots/*</url-pattern>
     </servlet-mapping>    
-    
+ -->    
     <servlet-mapping>
         <servlet-name>rent_out_spots</servlet-name>
         <url-pattern>/rent_out_spots/*</url-pattern>
@@ -58,11 +63,11 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<jsp-file>/jsp/my_account.jsp</jsp-file>
     </servlet>
     
-	<servlet>
+<!-- 	<servlet>
         <servlet-name>find_spots</servlet-name>
 		<jsp-file>/jsp/find_spots.jsp</jsp-file>
     </servlet>
-    
+ -->    
     <servlet>
         <servlet-name>rent_out_spots</servlet-name>
 		<jsp-file>/jsp/rent_out_spots.jsp</jsp-file>

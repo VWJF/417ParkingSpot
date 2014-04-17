@@ -18,10 +18,12 @@ $(document).ready(function() {
 		start_date = create_date($("#start_date").val() + "-" + $("#start_time").val());
 		end_date = create_date($("#end_date").val() + "-" + $("#end_time").val());
 		var is_date_valid = check_dates_valid();
+		
 		if($('#search_type').val() === 'current_location')
 			my_parking_map.load_map_for_current_location();
 		else
-			alert('to be implemented');
+			my_parking_map.add_new_marker_by_address();	
+			//alert('to be implemented');
 	});
 	
 	
@@ -29,12 +31,15 @@ $(document).ready(function() {
 		if($(this).val() === "by_address")
 		{
 			$('#address_search_bar').removeAttr('disabled');
+			var address_from_searchbar = $('#address_search_bar').val(); 
+			$('#address').attr("name", address_from_searchbar);
 			
 		}
 		else
 		{
 			$('#address_search_bar').attr('disabled','disabled');		
 		}
+
     });
 	
 	
