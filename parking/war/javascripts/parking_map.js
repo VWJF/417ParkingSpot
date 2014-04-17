@@ -121,12 +121,14 @@ parking_map.prototype.add_new_marker_by_address = function(callback) {
 			
 		    var contentString =  "<div id ='rent_out_menu'>"
 				 + "<p id='address_title'>" + current.selected_address + "</p><br>"
-				 + "<form id='rent_out_menu' action='post'>"
-				 + "<input type='hidden' id ='latitude' name='latitude' value='" + position_val.latitude + "'>"
-				 + "<input type='hidden' id ='longitude' name='longitude' value='" + position_val.longitude + "'>"
+				 + "<form id='rent_out_form' action='post'>"
+				 + "<input type='hidden' id ='latitude' name='latitude' value='" + position_val.lat() + "'>"
+				 + "<input type='hidden' id ='longitude' name='longitude' value='" + position_val.lng()+ "'>"
 				 + "<label for='hourly_rate'> Hourly Rate</label>"
 				 + "<input type='number' id ='hourly_rate' name='hourly_rate' min='1' required><br><br>"
-				 + "<input type='submit' value='Rent spot'>"
+				 + "<input id ='address_value' name='address_value' type='hidden' value='" + current.selected_address  + "'><br><br>"
+				 + "<input type='submit' value='Rent out spot'>"
+				 + "</form>"
 				 + "</div>";
 
 		    current.add_info_window(contentString, marker);
