@@ -21,6 +21,10 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <url-pattern>/make_booking_servlet/*</url-pattern>
     </servlet-mapping>
     
+      <servlet-mapping>
+        <servlet-name>make_booking</servlet-name>
+        <url-pattern>/make_booking/*</url-pattern>
+    </servlet-mapping>
 <!-- JSP Mapping  -->
 
 	<servlet-mapping>
@@ -37,24 +41,38 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <servlet-name>rent_out_spots</servlet-name>
         <url-pattern>/rent_out_spots/*</url-pattern>
     </servlet-mapping>
+<<<<<<< HEAD
             
      <servlet-mapping>
         <servlet-name>make_booking</servlet-name>
         <url-pattern>/make_booking/*</url-pattern>
     </servlet-mapping>
     
+=======
+        
+  
+>>>>>>> master
 <!-- Java Servlets  -->
     
     <servlet>
         <servlet-name>rent_out_servlet</servlet-name>
         <servlet-class>parking.RentOutServlet</servlet-class>
     </servlet>
+<<<<<<< HEAD
 
     <servlet>
         <servlet-name>make_booking_servlet</servlet-name>
         <servlet-class>com.eece417.ParkingSpot.server.MakeBooking</servlet-class>
     </servlet>
     
+=======
+       
+       
+    <servlet>
+        <servlet-name>make_booking</servlet-name>
+        <servlet-class>parking.MakeBookingServlet</servlet-class>
+    </servlet>
+>>>>>>> master
 <!-- JSP -->      
  
 

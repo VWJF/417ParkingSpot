@@ -20,6 +20,8 @@
     <meta charset="utf-8">       
     <link type="text/css" rel="stylesheet" href="/stylesheets/style.css" />
     <link type="text/css" rel="stylesheet" href="/stylesheets/parking_map.css" />
+     <link type="text/css" rel="stylesheet" href="/stylesheets/find_spots.css" />
+    
     
     <script type="text/javascript"
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUiC6DA0eL6xBGKpnbmvvgW8JazAZNIAM&sensor=true">
@@ -42,7 +44,7 @@
  					 <option value="current_location">Current Location</option>
   					 <option value="by_address">By Address</option>
 				</select>
-				<input name='address_search_bar' id='address_search_bar' type='text' placeholder='Address' disabled/>
+				<input name='address' id='address' type='text' placeholder='Address' disabled/>
 				
 				<p> I want to find parking between: </p>
 				<!--  Choose date -->
@@ -77,11 +79,13 @@
   					 <option value="23">23:00 </option>
 				</select>
 				<br><br>
+				
 				<label for = "end_date">End Date&nbsp;</label>
 				<input type="date" id="end_date" required>
 				<label for='end_time'> Hour</label>
 				<select id='end_time' name ="end_time">
- 					 <option value="00">00:00  </option>
+				 	 <option value="00">00:00  </option>
+ 					 <option value="01">01:00  </option>
   					 <option value="02">02:00 </option>
   					 <option value="03">03:00 </option>
   					 <option value="04">04:00 </option>
@@ -104,8 +108,12 @@
   					 <option value="21">21:00 </option>
   					 <option value="22">22:00 </option>
   					 <option value="23">23:00 </option>
-  					 <option value="24">24:00 </option>
 				</select>
+				<br><br>
+				
+				<label for='price_range'>Max Hourly Rate $</label>
+				<input id='price_range' name='price_range' type ='number' min='1' value ='1'>
+				
 				<br><br>
 				<input type="submit" value="Submit">
 			</form>
