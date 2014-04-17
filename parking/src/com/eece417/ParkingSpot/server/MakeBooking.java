@@ -141,7 +141,7 @@ public class MakeBooking extends HttpServlet {
 	                
 	        Query query = new Query("ParkingSpot", ParkingSpotAppKey);
 	        query.addSort("hourly_rate", Query.SortDirection.DESCENDING);
-	        //Add filter for a specific (lat,lng)
+	        //Add a filter for a specific ParkingSpot(lat,lng)
 	        query.setFilter(FilterOperator.EQUAL.of("latitude",lat_str)).setFilter(FilterOperator.EQUAL.of("longitude",long_str));
 	        
 	        List<Entity> ParkingSpots = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));

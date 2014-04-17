@@ -110,10 +110,7 @@
 				<input type="submit" value="Submit">
 			</form>
 			<br><br><br>
-			<div id = 'map_canvas'>
-			
-			
-			</div>	
+			<div id = 'map_canvas'> </div>	
 		
 		
  		</jsp:attribute>
