@@ -24,8 +24,13 @@ $(document).ready(function() {
 
 		    		if(result.status == true)
 		    	    {
-		    			$("#rent_out_menu").html("Successfully Registered Spot for Renting!<br> Thank You!")
+		    			$("#rent_out_menu").html("Successfully Registered Spot for Renting!<br> Thank You!");
 		    	    }
+		    		else
+		    		{
+		    			$("#rent_out_menu").html("Spot has already been registered!");
+
+		    		}
 
 		        },
 		    
