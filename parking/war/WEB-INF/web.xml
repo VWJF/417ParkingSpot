@@ -32,10 +32,15 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <servlet-name>rent_out_spots</servlet-name>
         <url-pattern>/rent_out_spots/*</url-pattern>
     </servlet-mapping>
-        
+            
+     <servlet-mapping>
+        <servlet-name>make_booking</servlet-name>
+        <url-pattern>/make_booking/*</url-pattern>
+    </servlet-mapping>
+    
 <!-- Java Servlets  -->
-        
-     <servlet>
+       
+    <servlet>
         <servlet-name>rent_out_servlet</servlet-name>
         <servlet-class>parking.RentOutServlet</servlet-class>
     </servlet>
@@ -58,7 +63,10 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<jsp-file>/jsp/rent_out_spots.jsp</jsp-file>
     </servlet>
     
-
+    <servlet>
+        <servlet-name>make_booking</servlet-name>
+		<jsp-file>/jsp/make_booking.jsp</jsp-file>
+    </servlet>
 
 	
 	

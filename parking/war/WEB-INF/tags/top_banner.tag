@@ -13,6 +13,8 @@
   				<li><a href="/my_account">My Account</a></li>
   				<li><a href="/find_spots">Find Spots</a></li>
   				<li><a href="/rent_out_spots">Rent Out Spots</a></li>
+  				<li><a href="/make_booking">Make Booking</a></li>
+  				
 			</ul>
 		</div>
 
