@@ -63,7 +63,7 @@ public class MakeBooking extends HttpServlet {
         String lngPosition =  req.getParameter("longitude");
         
         String parking_spot_key = latPosition + "_" + lngPosition;
-        //Entity parentParkingSpot = getParkingSpots(latPosition, lngPosition);
+        //Entity parentParkingSpot = getParkingSpots(latPosition, lngPosition); //FIXME:Test without this line first
         
         String BookingStructure = "Booking(booking_id, username, ParkingSpot, start_Date-Time, end_Date-Time)"; 
         System.out.println(BookingStructure +"\n"
@@ -73,11 +73,11 @@ public class MakeBooking extends HttpServlet {
         //Create a new Booking entity.
         String booking_key = user +"_" + start_time + "_" + end_time;
         Key BookingKey = KeyFactory.createKey("Booking", booking_key);
-        //Key BookingKey = KeyFactory.createKey("Booking", parentParkingSpot.getKey());
+        //Key BookingKey = KeyFactory.createKey("Booking", parentParkingSpot.getKey()); //FIXME:Test without this line first
 
         Entity booking = new Entity("Booking", BookingKey);
         booking.setProperty("user", user);
-        //booking.setProperty("parkingspot", parkingSpot);
+        //booking.setProperty("parkingspot", parkingSpot); //FIXME:Test without this line first
         booking.setProperty("latitude", latPosition);
         booking.setProperty("longitude", lngPosition);
 
@@ -89,7 +89,7 @@ public class MakeBooking extends HttpServlet {
         // TODO: Check based on start_time, end_time, current_time
 		boolean success = false;
 
-        try{
+        try{ //FIXME:Test without try{..}catch{..} line first
         	if( false && isConflictFreeBooking(booking) ){
 
         		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
