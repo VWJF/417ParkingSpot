@@ -79,6 +79,8 @@ public class RentOutServlet extends HttpServlet {
         Query query = new Query("parkingspot", parkingSpotKey);
 		
 		List<Entity> parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(1));
+		if(parkingSpot.size() == 1)
+			System.out.println("Duplicate ParkingSpot.");
 		return parkingSpot.size() == 1;
 	}
 	

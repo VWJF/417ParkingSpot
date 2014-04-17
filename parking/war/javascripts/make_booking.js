@@ -10,7 +10,7 @@ $(document).ready(function() {
 	$(document).on('submit','#rent_out_form', function(e){
 		 e.preventDefault(e);
 
-		var url = "/rent_out_servlet/";
+		var url = "/make_booking_servlet/";
 
 		    $.ajax({
 		    	url: url,
@@ -18,7 +18,8 @@ $(document).ready(function() {
 		    	type: 'post',
 		    	data: {
 		    		latitude: $('#latitude').val(), longitude: $('#longitude').val(), 
-		    		hourly_rate: $('#hourly_rate').val(), address_value: $('#address_value').val() 
+		    		hourly_rate: $('#hourly_rate').val(), start_time: $('#start_time').val,
+		    		end_time: $('#end_time').val
 		    	},
 		    success: function (result) {
 

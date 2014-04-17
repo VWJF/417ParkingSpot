@@ -15,6 +15,8 @@ import com.google.appengine.api.datastore.Query.FilterPredicate;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
+import com.google.appengine.labs.repackaged.org.json.JSONException;
+import com.google.appengine.labs.repackaged.org.json.JSONObject;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -50,45 +52,64 @@ public class MakeBooking extends HttpServlet {
         // ParkingSpot for a given ParkingSpotApp.  However, the write rate to each
         // ParkingSpotApp should be limited to ~1/second.
         
+        this.current_time = new Date();  //Date current_time = (Date) req.getAttribute("current_time");
+        
         String ParkingSpotName = req.getParameter("ParkingSpotApp");
-
-        String username = req.getParameter("username");
-        Key BookingKey = KeyFactory.createKey("Booking", ParkingSpotName);
         
         Date start_time = (Date) req.getAttribute("start_time");
         Date end_time = (Date) req.getAttribute("end_time");
-        this.current_time = new Date();  //Date current_time = (Date) req.getAttribute("current_time");
-
-
         //Get a ParkingSpot Entity from Datastore that matches (latitude, longitude)
-        String latPosition =  req.getParameter("lat");
-        String lngPosition =  req.getParameter("lng");
+        String latPosition =  req.getParameter("latitude");
+        String lngPosition =  req.getParameter("longitude");
         
-        Entity parkingSpot = getParkingSpots(latPosition, lngPosition, ParkingSpotName);
+        String parking_spot_key = latPosition + "_" + lngPosition;
+        //Entity parentParkingSpot = getParkingSpots(latPosition, lngPosition);
         
         String BookingStructure = "Booking(booking_id, username, ParkingSpot, start_Date-Time, end_Date-Time)"; 
         System.out.println(BookingStructure +"\n"
-        				+ user + ": Booking(" + username + ", ParkingSpot:(" + latPosition + ", " + lngPosition+"), "
+        				+ user + ": Booking(" + user + ", ParkingSpot:(" + latPosition + ", " + lngPosition+"), "
         				+start_time+", "+end_time+", "+current_time +")\n");
        
         //Create a new Booking entity.
+        String booking_key = user +"_" + start_time + "_" + end_time;
+        Key BookingKey = KeyFactory.createKey("Booking", booking_key);
+        //Key BookingKey = KeyFactory.createKey("Booking", parentParkingSpot.getKey());
+
         Entity booking = new Entity("Booking", BookingKey);
         booking.setProperty("user", user);
-        booking.setProperty("username", username);
-        booking.setProperty("parkingspot", parkingSpot);
+        //booking.setProperty("parkingspot", parkingSpot);
+        booking.setProperty("latitude", latPosition);
+        booking.setProperty("longitude", lngPosition);
+
         booking.setProperty("start_time", start_time);
         booking.setProperty("end_time", end_time);
 
-        booking.setProperty("lat", latPosition);
-        booking.setProperty("lng", lngPosition);
         
         // Check for conflicts with other Bookings, add the Booking to the datastore if it is conflict free.
         // TODO: Check based on start_time, end_time, current_time
-        if( conflictFreeBooking(booking, ParkingSpotName) ){
-        	DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        	datastore.put(booking);
+		boolean success = false;
+
+        try{
+        	if( false && isConflictFreeBooking(booking) ){
+
+        		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        		datastore.put(booking);
+        		success = true;
+        	}
+        }catch(IllegalArgumentException e){
+        	System.out.println("## Error: Booking not saved.");
+        	System.out.println("MakeBooking.doPost() conflictFreeBooking()"+e.getLocalizedMessage());
         }
         
+    	JSONObject resultJson = new JSONObject();
+		try {
+			resultJson.put("status", success);
+	        resp.setContentType("json");
+			resp.getWriter().println(resultJson);     
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
         resp.sendRedirect("/find_spots.jsp?parkingSpotName=" + ParkingSpotName);
     }
 
@@ -104,28 +125,24 @@ public class MakeBooking extends HttpServlet {
 		 * @return 
 		 * @throws IOException
 		 */
-		private Entity getParkingSpots(String latPosition, String lngPosition, String ParkingSpotName)
+		private Entity getParkingSpots(String lat_str, String long_str)
 				throws IOException {
 			
-	        //String ParkingSpotApp = req.getParameter("ParkingSpotApp");
-	        //if (ParkingSpotApp == null) {
-	        //	ParkingSpotApp = "default";
-	        //}        
-	        //String latPosition = req.getParameter("lat");
-	        //String lngPosition = req.getParameter("lng");
 	        
-	        String queryParameters = "[lat->"+latPosition+"] [lng->"+lngPosition+"]";
+	        String parking_spot_parameters = "[lat->"+lat_str+"] [lng->"+long_str+"]";
 	        
+		    String master_key = lat_str + "_" + long_str;
+
 	        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-	        Key ParkingSpotAppKey = KeyFactory.createKey("ParkingSpot", ParkingSpotName);
+	        Key ParkingSpotAppKey = KeyFactory.createKey("parkingspot", master_key);
 	        
 	        // Run an ancestor query to ensure we see the most up-to-date
 	        // view of the Greetings belonging to the selected Guestbook.
 	                
 	        Query query = new Query("ParkingSpot", ParkingSpotAppKey);
-	        query.addSort("price", Query.SortDirection.DESCENDING);
+	        query.addSort("hourly_rate", Query.SortDirection.DESCENDING);
 	        //Add filter for a specific (lat,lng)
-	        query.setFilter(FilterOperator.EQUAL.of("lat",latPosition)).setFilter(FilterOperator.EQUAL.of("lng",lngPosition));
+	        query.setFilter(FilterOperator.EQUAL.of("latitude",lat_str)).setFilter(FilterOperator.EQUAL.of("longitude",long_str));
 	        
 	        List<Entity> ParkingSpots = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
 	        
@@ -133,19 +150,19 @@ public class MakeBooking extends HttpServlet {
 	        String allParkingSpots = "";
 	        
 	        if (ParkingSpots.isEmpty()) {
-	        	System.out.println(ParkingSpotName + "ParkingSpots not found matching: "+queryParameters);
+	        	System.out.println(master_key + "ParkingSpots not found matching: "+parking_spot_parameters);
 	        } else {
 	        	firstSpot = ParkingSpots.get(0);
 
 	        	String ParkingStructure = "number, ParkingSpot(parking_spot_id, latitude, longitude, price, owner)";
 
-	        	allParkingSpots = "Found ParkingSpots with parameters:" + queryParameters + "\n";
+	        	allParkingSpots = "Found ParkingSpots with parameters:" + parking_spot_parameters + "\n";
 	            allParkingSpots += ParkingStructure +"\n";
 
 	        	int i = 0;
 	        	 for (Entity parking : ParkingSpots) {
-	        		String lat = parking.getProperty("lat").toString();
-	        		String lng = parking.getProperty("lng").toString();
+	        		String lat = parking.getProperty("latitude").toString();
+	        		String lng = parking.getProperty("longitude").toString();
 	        		String price = parking.getProperty("price").toString();
 	        		String owner = parking.getProperty("owner").toString();
 	        		
@@ -169,27 +186,29 @@ public class MakeBooking extends HttpServlet {
 		 * @return
 		 * @throws IOException
 		 */
-		private boolean conflictFreeBooking(Entity checkBooking, String ParkingSpotName)
-				throws IOException {
+		private boolean isConflictFreeBooking(Entity checkBooking)
+				throws IOException, IllegalArgumentException {
 	        
 			// TODO: Check if the provided Entity if of type Booking ??			
 			//
+			if (checkBooking.getKind() == "Booking"){
+				throw new IllegalArgumentException("Entity Kind should be \"Booking\"");
+			}
 			
 			// Retrieve information from Booking Entity 
 			
 			User booking_user = (User) checkBooking.getProperty("user");
-			String booking_username = (String) checkBooking.getProperty("username");
 			
 			Entity booking_parkingSpot = (Entity) checkBooking.getProperty("parkingspot");
 			Date booking_start_time = (Date) checkBooking.getProperty("start_time");
 			Date booking_end_time = (Date) checkBooking.getProperty("end_time");
 
-			String booking_lat = (String) checkBooking.getProperty("lat");
-			String booking_lng = (String) checkBooking.getProperty("lng");
+			String booking_lat = (String) checkBooking.getProperty("latitude");
+			String booking_lng = (String) checkBooking.getProperty("longitude");
 
 			 String BookingStructure = "Booking(booking_id, username, ParkingSpot, start_Date-Time, end_Date-Time)"; 
 		        System.out.println(BookingStructure +"\n"
-		        				+ booking_user + ": Booking(" + booking_username + ", ParkingSpot:(" + booking_lat + ", " + booking_lng+"), "
+		        				+ booking_user + ": Booking(" + booking_user + ", ParkingSpot:(" + booking_lat + ", " + booking_lng+"), "
 		        				+booking_start_time+", "+booking_end_time+", "+current_time +")\n");
 	        	        
 	        // Filters to compare attributes in the data store and with an attribute from provided Booking.

@@ -39,12 +39,17 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
     </servlet-mapping>
     
 <!-- Java Servlets  -->
-       
+    
     <servlet>
         <servlet-name>rent_out_servlet</servlet-name>
         <servlet-class>parking.RentOutServlet</servlet-class>
     </servlet>
-       
+
+    <servlet>
+        <servlet-name>make_booking_servlet</servlet-name>
+        <servlet-class>com.eece417.ParkingSpot.server.MakeBooking</servlet-class>
+    </servlet>
+    
 <!-- JSP -->      
  
 

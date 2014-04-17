@@ -54,6 +54,8 @@
 			<button type='button' id='submit_address'>Search</button>
 			
 			<br><br>
+			
+			
 			<div id='map_canvas'></div>
 		
  		</jsp:attribute>
