@@ -26,13 +26,15 @@ import javax.servlet.http.HttpServletResponse;
 
 @SuppressWarnings("serial")
 public class RentOutServlet extends HttpServlet {
+	
+	private DatastoreService datastore;
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
-	    System.out.println("yahoo");
 
 		UserService userService = UserServiceFactory.getUserService();
 		User user = userService.getCurrentUser();
-
+		
+		// Get values
 		String address = req.getParameter("address_value");
 		String longitude_str = req.getParameter("longitude");
 		String latitude_str = req.getParameter("latitude");
@@ -41,29 +43,45 @@ public class RentOutServlet extends HttpServlet {
 	    double latitude = Double.parseDouble(latitude_str);   
 	    int hourly_rate = Integer.parseInt(req.getParameter("hourly_rate"));
 	    String master_key = latitude_str + "_" + longitude_str;
-	    		
-		Key guestbookKey = KeyFactory.createKey("parkingspot", "default");
-		Entity parkingSpot = new Entity("parkingspot", guestbookKey);
-
-	    System.out.println(master_key);
-
-		parkingSpot.setProperty("master_key", master_key);
-		parkingSpot.setProperty("owner", user);
-		parkingSpot.setProperty("address", address);
-		parkingSpot.setProperty("longitude", longitude);
-		parkingSpot.setProperty("latitude", latitude);
-		parkingSpot.setProperty("hourly_rate", hourly_rate);
-
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		datastore.put(parkingSpot);	
+	    
+		datastore = DatastoreServiceFactory.getDatastoreService();
+		Key parkingSpotKey = KeyFactory.createKey("parkingspot", master_key);
 		JSONObject resultJson = new JSONObject();
+		boolean success = false;
+		
+		// Insert into data store if non-duplicate
+		if(isDuplicateParkingSpot(parkingSpotKey) == false)
+		{
+
+			Entity parkingSpot = new Entity("parkingspot", parkingSpotKey);
+			parkingSpot.setProperty("owner", user);
+			parkingSpot.setProperty("address", address);
+			parkingSpot.setProperty("longitude", longitude);
+			parkingSpot.setProperty("latitude", latitude);
+			parkingSpot.setProperty("hourly_rate", hourly_rate);
+			datastore.put(parkingSpot);	
+			success = true;
+		}
+		
 		
 		try {
-			resultJson.put("status", true);
+			resultJson.put("status", success);
+	        resp.setContentType("json");
 			resp.getWriter().println(resultJson);     
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
 		
 	}
+	
+	private boolean isDuplicateParkingSpot(Key parkingSpotKey)
+	{
+        Query query = new Query("parkingspot", parkingSpotKey);
+		
+		List<Entity> parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(1));
+		return parkingSpot.size() == 1;
+	}
+	
 }
+
+
