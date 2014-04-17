@@ -41,7 +41,7 @@
 		 	//=====================
 		 	String ParkingSpotName = "ParkingSpotApp";
 		 	String BookingQueryKind = "BookingsQuery";
-		 	String ParkingSpotQueryKind = "ParkingSpotQuery";
+		 	String ParkingSpotQueryKind = "parkingspot";
 		 	String BookingKeyKind = "Booking";
 		 	String ParkingSpotKeyKind = "parkingspot";
 		 	String userName = null;		 
@@ -66,7 +66,7 @@
       		//=====================
             List<Entity> bookings = doQuery(BookingKeyKind, ParkingSpotName, BookingQueryKind, "startDate", "username", userName);             
                      
-            List<Entity> parkingSpots = doQuery(ParkingSpotKeyKind, ParkingSpotName, ParkingSpotQueryKind, "longitude", "owner", userName);
+            List<Entity> parkingSpots = doQuery(ParkingSpotKeyKind, ParkingSpotName, ParkingSpotQueryKind, "owner", "owner", userName);
             
             System.out.println("bookings: " + bookings.size() + ", parkingspots: " + parkingSpots.size());
             //PROCESS QUERY DATA 
@@ -104,13 +104,15 @@
             	 for (Entity parkingSpot : parkingSpots) {
             		 Map<String, String> parkingSpotMap = new HashMap<String, String>();
             		 
-            		 parkingSpotMap.put("owner", parkingSpot.getProperty("owner").toString());
-            		 parkingSpotMap.put("address", parkingSpot.getProperty("address").toString());
-            		 parkingSpotMap.put("longitude", parkingSpot.getProperty("longitude").toString());
-            		 parkingSpotMap.put("latitude", parkingSpot.getProperty("latitude").toString());
-            		 parkingSpotMap.put("hourly_rate", parkingSpot.getProperty("hourly_rate").toString());
+            		 if(parkingSpot.getProperty("owner").toString().equals(userName)){
+            		 	parkingSpotMap.put("owner", parkingSpot.getProperty("owner").toString());
+            		 	parkingSpotMap.put("address", parkingSpot.getProperty("address").toString());
+            		 	parkingSpotMap.put("longitude", parkingSpot.getProperty("longitude").toString());
+            		 	parkingSpotMap.put("latitude", parkingSpot.getProperty("latitude").toString());
+            		 	parkingSpotMap.put("hourly_rate", parkingSpot.getProperty("hourly_rate").toString());
             		            		 
-            		 parkingSpotsList.add(parkingSpotMap);            		             		 
+            		 	parkingSpotsList.add(parkingSpotMap);
+            		 }
             	 }
             }
             
@@ -150,15 +152,12 @@
         	  DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         	  
         	  Key Key = KeyFactory.createKey(keyKind, ParkingSpotName);
-        	  // Run an ancestor query to ensure we see the most up-to-date
-        	  // view of the Greetings belonging to the selected Guestbook.
+        	  Query query = new Query(QueryKind);
         	  
-        	  Query query = new Query(QueryKind, Key);
+        	  //query.setFilter(new FilterPredicate(filterProperty, FilterOperator.NOT_EQUAL, filterValue));
         	  query.addSort(sortByAttribute, Query.SortDirection.DESCENDING);
-        	  query.setFilter(new FilterPredicate(filterProperty, FilterOperator.EQUAL, filterValue));
         	  
-        	  List<Entity> attributesList = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
-        	  
+        	  List<Entity> attributesList = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(20));        	  
         	  return attributesList;
           }
           %>          
@@ -176,18 +175,18 @@
         		  outputString += "<ul>";
         		  for(Map<String, String> attribute : attributesList)
         		  {
-        			  outputString += "<li>";
+        			  outputString += "<li class=\"listElement\">";
         			  outputString += "<ul>";
         			  for(Object key : attribute.keySet())
-        			  {
+        			  {        				  
         				  outputString += "<li>";
         				  outputString += key.toString() + ": " + attribute.get(key);
         				  outputString += "</li>";
         			  }
-        			  outputString += "</u>";
+        			  outputString += "</ul>";
         			  outputString += "</li>";
         		  }
-        		  outputString += "</u>";
+        		  outputString += "</ul>";
         	  }
         	  
         	  return outputString;
