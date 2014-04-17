@@ -243,9 +243,9 @@ public class MakeBookingServlet extends HttpServlet {
 		System.out.println("    parkingSpot.getKey(): "+ KeyFactory.keyToString(booked_parkingSpot.get(0).getKey()));
 		System.out.println("    isConflictFreeBooking(): Previous ParkingSpot Found.");
 
-		return false;
+		//return false;
 
-/*		
+		
 		//FIXME: Incomplete:....
 		//....Problem with Filter in Query.setFilter(Filter). Filter can only operate on one property. We want to Filter by two properties (i.e. start_date & end_date)
 		
@@ -254,10 +254,10 @@ public class MakeBookingServlet extends HttpServlet {
 		// Filters to compare attributes in the data store and with an attribute from provided Booking.
 		// A property of a Booking entity from the Data-store is (<=,>=,==) to the property of the Booking provided.
 		// TODO: Check logic (greater than vs greater than or equal).
-		Filter parkingSpotFilter =
-				new FilterPredicate("ParkingSpot",
-						FilterOperator.EQUAL,
-						booking_parkingSpot);
+		//Filter parkingSpotFilter =
+		//		new FilterPredicate("ParkingSpot",
+		//				FilterOperator.EQUAL,
+		//				booking_parkingSpot);
 
 		Filter startAboveMinFilter =
 				new FilterPredicate("start_date_ms",
@@ -311,23 +311,25 @@ public class MakeBookingServlet extends HttpServlet {
 				CompositeFilterOperator.and(endBelowMaxFilter, endAboveMinFilter);
 
 
-		Filter parkingSpotWithStartRangeConflict =
-				CompositeFilterOperator.and(parkingSpotFilter, startRangeConflictFilter);
+		//Filter parkingSpotWithStartRangeConflict =
+		//		CompositeFilterOperator.and(parkingSpotFilter, startRangeConflictFilter);
 
-		Filter parkingSpotWithEndRangeConflict =
-				CompositeFilterOperator.and(parkingSpotFilter, endRangeConflictFilter);
+		//Filter parkingSpotWithEndRangeConflict =
+		//		CompositeFilterOperator.and(parkingSpotFilter, endRangeConflictFilter);
 
-		Filter conflictFilter =
-				CompositeFilterOperator.or(parkingSpotWithStartRangeConflict, parkingSpotWithEndRangeConflict);
+		//Filter conflictFilter =
+		//		CompositeFilterOperator.or(parkingSpotWithStartRangeConflict, parkingSpotWithEndRangeConflict);
 
-		Query q = new Query("Booking").setAncestor(ancestorKey).setFilter(conflictFilter);
+		Query q = new Query("Booking").setAncestor(parent_key).setFilter(startRangeConflictFilter);
 		PreparedQuery pq = datastore.prepare(q);
-
-		if(pq.asIterator().hasNext())
-			return false;
-		else
-			return true;
-*/	}
+		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(1));
+		
+		return ! (result.size() == 1);
+//		if(pq.asIterator().hasNext())
+//			return false;
+//		else
+//			return true;
+	}
 
 	/**
 	 * Helper method that converts a (pre-formated) Date representation into a Date Object to be stored in DataStore.
