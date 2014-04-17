@@ -1,32 +1,78 @@
 $(document).ready(function() {
 	
 	// JS date month is 0 - 11
+	// Date includes year, month, day, hours
 	var start_date;
 	var end_date;
 	var my_parking_map = new parking_map();
 	
+	 
 	set_default_dates();
 	
+	// Submit search form to find spots
 	$("#search_form").submit(function(e){
 		e.preventDefault(e);
 		start_date = create_date($("#start_date").val() + "-" + $("#start_time").val());
 		end_date = create_date($("#end_date").val() + "-" + $("#end_time").val());
 		var is_date_valid = check_dates_valid();
+
 		if($('#search_type').val() === 'current_location')
+		{
 			my_parking_map.load_map_for_current_location();
+		}
 		else
-			alert('to be implemented');
+		{
+			my_parking_map.load_map(-37.397, 155.644);
+			my_parking_map.find_parking_spots_nearby_address($('#address').val(), start_date, end_date);
+		}
+	});
+	
+	//Submit Reservation form for spot from infowindow
+	$(document).on('submit','#reservation_form', function(e){
+		 e.preventDefault(e);
+		 alert(end_date);
+		var url = "/make_booking/";
+
+		    $.ajax({
+		    	url: url,
+		    	dataType: 'json',
+		    	type: 'post',
+		    	data: {
+		    		latitude: $('#latitude').val(), 
+		    		longitude: $('#longitude').val(), 
+		    		address_value: $('#address_value').val(),
+		    		end_date_hours: end_date,
+		    		start_date_hours: start_date,
+		    	},
+		    success: function (result) {
+
+		    		if(result.status == true)
+		    	    {
+		    			alert('success!');
+		    	    }
+		    		else
+		    		{
+
+		    		}
+
+		        },
+		    
+		    	error: function(xhr, textStatus, errorThrown){
+		    		alert('request failed');
+		    	}
+		    });	
+		    
 	});
 	
 	$('#search_type').change(function(){
 		if($(this).val() === "by_address")
 		{
-			$('#address_search_bar').removeAttr('disabled');
+			$('#address').removeAttr('disabled');
 			
 		}
 		else
 		{
-			$('#address_search_bar').attr('disabled','disabled');		
+			$('#address').attr('disabled','disabled');		
 		}
     });
 	
@@ -108,7 +154,7 @@ $(document).ready(function() {
 		var day = arr[2];
 		var hours = arr[3];
 		
-		return new Date(year, month, day, hours);
+		return (new Date(year, month, day, hours)).getTime();
 
 
 	}

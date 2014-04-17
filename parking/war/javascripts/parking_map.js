@@ -6,6 +6,7 @@
 function parking_map()
 {
 	var current = this;
+	this.infowindow;
 	this.selected_marker;
 	this.selected_address;
 	this.map;
@@ -34,10 +35,6 @@ function parking_map()
 		current.map = new google.maps.Map( document.getElementById("map_canvas"), myOptions);
 		current.map.setCenter( myOptions.center);
 
-		var marker = new google.maps.Marker({
-			position: myOptions.center,
-			map: current.map,
-		});
 			
 	}
 	
@@ -49,8 +46,14 @@ function parking_map()
 		
 		 google.maps.event.addListener(marker, 'click', function() {
 			   
+			   if(current.infowindow != null)
+				{
+				  current.infowindow.close();  
+				}
+			   
 			   infoWindow.setContent(contentString);
 			   infoWindow.open(current.map, marker);
+			   current.infowindow = infoWindow;
 			   current.selected_marker = marker;
 			   current.lng = marker.getPosition().lng();
 			   current.lat = marker.getPosition().lat();
@@ -72,6 +75,7 @@ parking_map.prototype.load_map_for_current_location = function()
 
 		navigator.geolocation.getCurrentPosition(function(position) {
 			current.load_map(position.coords.latitude, position.coords.longitude);
+			
 			
 		}, function() {
 
@@ -101,13 +105,13 @@ parking_map.prototype.load_map_for_current_location = function()
 
 
 
-//Finds the position of the address (long/lat)
+//Finds the position of the address (long/lat) for registering/renting out a spot
 //Call this by parking_map(your instance).add_new_marker_by_address();
-parking_map.prototype.add_new_marker_by_address = function(callback) {
+parking_map.prototype.add_new_rent_marker_by_address = function(address_val) {
 	
 	var current = this;
 	
-	current.selected_address = document.getElementById('address').value;
+	current.selected_address = address_val;
 	current.geocoder.geocode( { 'address': current.selected_address}, function(results, status) {
 		
 		if (status == google.maps.GeocoderStatus.OK) {
@@ -124,8 +128,8 @@ parking_map.prototype.add_new_marker_by_address = function(callback) {
 				 + "<form id='rent_out_form' action='post'>"
 				 + "<input type='hidden' id ='latitude' name='latitude' value='" + position_val.lat() + "'>"
 				 + "<input type='hidden' id ='longitude' name='longitude' value='" + position_val.lng()+ "'>"
-				 + "<label for='hourly_rate'> Hourly Rate</label>"
-				 + "<input type='number' id ='hourly_rate' name='hourly_rate' min='1' required><br><br>"
+				 + "<label for='hourly_rate'> Hourly Rate $ </label>"
+				 + "<input type='number' id ='hourly_rate' name='hourly_rate' min='1' value='1' required><br><br>"
 				 + "<input id ='address_value' name='address_value' type='hidden' value='" + current.selected_address  + "'><br><br>"
 				 + "<input type='submit' value='Rent out spot'>"
 				 + "</form>"
@@ -140,5 +144,41 @@ parking_map.prototype.add_new_marker_by_address = function(callback) {
 	});	
 }
 
+// Find the parking spots near the given address to reserve
+parking_map.prototype.find_parking_spots_nearby_address = function(address_val, start_date_hours, end_date_hours) {
+	
+	var current = this;
+	
+	current.selected_address = address_val;
+	current.geocoder.geocode( { 'address': current.selected_address}, function(results, status) {
+		
+		if (status == google.maps.GeocoderStatus.OK) {
+			var position_val = results[0].geometry.location;
+			current.map.setCenter(position_val);
 
+			// TEST MARKER
+			var marker = new google.maps.Marker({
+				position: position_val,
+				map: current.map,
+			});
+		    var contentString =  "<div id ='reserve_spot_menu'>"
+				 + "<p id='address_title'>" + current.selected_address + "</p><br>"
+				 + "<form id='reservation_form' action='post'>"
+				 + "<input type='hidden' id ='latitude' name='latitude' value='" + position_val.lat() + "'>"
+				 + "<input type='hidden' id ='longitude' name='longitude' value='" + position_val.lng()+ "'>"
+				 + "<input id ='address_value' name='address_value' type='hidden' value='" + current.selected_address  + "'><br><br>"
+				 + "<input id ='start_date_hours' name='start_date_hours' type='hidden' value='" + start_date_hours + "'><br><br>"
+				 + "<input id ='end_date_hours' name='end_date_hours' type='hidden' value='" + end_date_hours + "'><br><br>"
+				 + "<input type='submit' value='Reserve Spot'>"
+				 + "</form>"
+				 + "</div>";
+		    
+		    current.add_info_window(contentString, marker);
+
+		} else {
+			alert('Geocode was not successful for the following reason: ' + status);
+			current.selected_address = null;
+		}
+	});	
+}
 
