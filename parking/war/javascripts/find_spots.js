@@ -36,25 +36,31 @@ $(document).ready(function() {
 		var today = new Date();
 		var month = today.getMonth() + 1;
 		var day  =  today.getDate();
+		var hours = today.getHours();
 		
 		// Format into string that must have a 0 in front of it if only 1 digit
-		if(month < 10)
-		{
-			month = "0" + month.toString();
-		}
-		
-		if(day < 10)
-		{
-			day = "0" + day.toString();
-		}
-		
-		$('#start_time').val(today.getHours());
-		$('#end_time').val(today.getHours());
+		month = make_double_digits(month);
+		day = make_double_digits(day);
+		hours = make_double_digits(hours);
+
+		$('#start_time').val(hours);
+		$('#end_time').val(hours);
 		today = today.getFullYear() + "-" + month + "-" +  day;
 		$('#start_date').val(today);
 		$('#end_date').val(today);
 
 		
+	}
+	
+	//If only single digit, add 0 to it to make double digit
+	function make_double_digits(digits)
+	{
+		if(digits < 10)
+		{
+			digits = "0" + digits.toString();
+		}
+		
+		return digits;
 	}
 	
 	function check_dates_valid()

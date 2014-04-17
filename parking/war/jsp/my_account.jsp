@@ -130,6 +130,7 @@
 
 
 		<jsp:attribute name="main_content">
+
 		
 			Welcome user <span id="userName" style="color:red">  </span>
 			<p>Welcome user ${fn:escapeXml(userName)} </p>
