@@ -42,7 +42,9 @@ public class MakeBooking extends HttpServlet {
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
                 throws IOException {
-        
+        try{
+		System.out.println("Starting Booking.");
+		
 		UserService userService = UserServiceFactory.getUserService();
         User user = userService.getCurrentUser();
 
@@ -65,11 +67,12 @@ public class MakeBooking extends HttpServlet {
         String parking_spot_key = latPosition + "_" + lngPosition;
         //Entity parentParkingSpot = getParkingSpots(latPosition, lngPosition); //FIXME:Test without this line first
         
-        String BookingStructure = "Booking(booking_id, username, ParkingSpot, start_Date-Time, end_Date-Time)"; 
+        String BookingStructure = "Booking(booking_id, username, ParkingSpot, start_Date-Time, end_Date-Time) current_time"; 
         System.out.println(BookingStructure +"\n"
         				+ user + ": Booking(" + user + ", ParkingSpot:(" + latPosition + ", " + lngPosition+"), "
-        				+start_time+", "+end_time+", "+current_time +")\n");
+        				+start_time+", "+end_time+") "+current_time +"\n");
        
+        System.out.println("Create new Booking Entity.");
         //Create a new Booking entity.
         String booking_key = user +"_" + start_time + "_" + end_time;
         Key BookingKey = KeyFactory.createKey("Booking", booking_key);
@@ -87,16 +90,18 @@ public class MakeBooking extends HttpServlet {
         
         // Check for conflicts with other Bookings, add the Booking to the datastore if it is conflict free.
         // TODO: Check based on start_time, end_time, current_time
-		boolean success = false;
+        System.out.println("Check for conflicting Booking Entities.");
+        boolean success = false;
 
         try{ //FIXME:Test without try{..}catch{..} line first
-        	if( false && isConflictFreeBooking(booking) ){
+        	if( true ){//&& isConflictFreeBooking(booking) ){
 
         		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
         		datastore.put(booking);
         		success = true;
         	}
         }catch(IllegalArgumentException e){
+        	e.printStackTrace();
         	System.out.println("## Error: Booking not saved.");
         	System.out.println("MakeBooking.doPost() conflictFreeBooking()"+e.getLocalizedMessage());
         }
@@ -109,8 +114,13 @@ public class MakeBooking extends HttpServlet {
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		
-        resp.sendRedirect("/find_spots.jsp?parkingSpotName=" + ParkingSpotName);
+        
+       // resp.sendRedirect("/make_booking.jsp");
+        }
+        catch(IOException e){
+        	e.printStackTrace();
+        	throw new IOException(e);
+        }
     }
 
 		/**
