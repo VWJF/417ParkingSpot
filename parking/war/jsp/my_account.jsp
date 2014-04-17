@@ -48,7 +48,6 @@
 
 		<jsp:attribute name="main_content">
 
-		
 			#WRITE HERE#
 		
  		</jsp:attribute>

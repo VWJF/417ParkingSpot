@@ -10,6 +10,14 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<welcome-file>jsp/welcome.jsp</welcome-file>
 	</welcome-file-list>
     
+<!-- Java Servlets Mapping -->
+    <servlet-mapping>
+        <servlet-name>rent_out_servlet</servlet-name>
+        <url-pattern>/rent_out_servlet/*</url-pattern>
+    </servlet-mapping>
+    
+<!-- JSP Mapping  -->
+
 	<servlet-mapping>
         <servlet-name>my_account</servlet-name>
         <url-pattern>/my_account/*</url-pattern>
@@ -25,6 +33,16 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <url-pattern>/rent_out_spots/*</url-pattern>
     </servlet-mapping>
         
+<!-- Java Servlets  -->
+        
+     <servlet>
+        <servlet-name>rent_out_servlet</servlet-name>
+        <servlet-class>parking.RentOutServlet</servlet-class>
+    </servlet>
+       
+<!-- JSP -->      
+ 
+
     <servlet>
         <servlet-name>my_account</servlet-name>
 		<jsp-file>/jsp/my_account.jsp</jsp-file>

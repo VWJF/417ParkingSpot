@@ -12,7 +12,6 @@
 <div class="wrapper-mid">
 <div class="mid-gap"></div>
 <div class="mid-left">
-
 	<!-- Loads the content for the middle of page inside the white area -->
 	<jsp:invoke fragment="main_content"/>
 </div>
