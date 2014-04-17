@@ -40,6 +40,10 @@
 		 	//CONSTANTS
 		 	//=====================
 		 	String ParkingSpotName = "ParkingSpotApp";
+		 	String BookingQueryKind = "BookingsQuery";
+		 	String ParkingSpotQueryKind = "ParkingSpotQuery";
+		 	String BookingKeyKind = "Booking";
+		 	String ParkingSpotKeyKind = "parkingspot";
 		 	String userName = null;		 
 		 	
 		 	
@@ -56,32 +60,25 @@
         	else {
         		response.sendRedirect(userService.createLoginURL(request.getRequestURI()));
        		 }
-      		   
       		
       		
       		//QUERY DATA FROM DATASTORE
       		//=====================
-            DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-            Key BookingKey = KeyFactory.createKey("Booking", ParkingSpotName);
+            List<Entity> bookings = doQuery(BookingKeyKind, ParkingSpotName, BookingQueryKind, "startDate", "username", userName);             
+                     
+            List<Entity> parkingSpots = doQuery(ParkingSpotKeyKind, ParkingSpotName, ParkingSpotQueryKind, "longitude", "owner", userName);
             
-            // Run an ancestor query to ensure we see the most up-to-date
-            // view of the Greetings belonging to the selected Guestbook.
-                    
-            Query query = new Query("ParkingSpotQuery", BookingKey);
-            query.addSort("startDate", Query.SortDirection.DESCENDING);
-            query.setFilter(new FilterPredicate("username", FilterOperator.EQUAL, userName));
-            
-            List<Entity> bookings = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
-              
-            
-            
+            System.out.println("bookings: " + bookings.size() + ", parkingspots: " + parkingSpots.size());
             //PROCESS QUERY DATA 
             //=====================
-            List<Map> bookingsList = new ArrayList<Map>();
+            
+            	//BOKINGS
+      			//=====================
+            List<Map<String, String>> bookingsList = new ArrayList<Map<String, String>>();
                         
             if (bookings.isEmpty()) {
             	System.out.println(userName + " has no bookings");
-            	//responseHTMLString = "<div>'" + reqUsername + "' has no bookings for you.</div>";
+            	
             } else {
             	 for (Entity booking : bookings) {
             		 Map<String, String> bookingMap = new HashMap<String, String>();
@@ -92,8 +89,28 @@
             		 bookingMap.put("endDate", booking.getProperty("endDate").toString());
             		 bookingMap.put("status", booking.getProperty("status").toString());
             		             		 
-            		 bookingsList.add(bookingMap);
-            		             		 
+            		 bookingsList.add(bookingMap);            		             		 
+            	 }
+            }
+            
+				//PARKING SPOTS
+            	//=====================
+            List<Map<String, String>> parkingSpotsList = new ArrayList<Map<String, String>>();
+                        
+            if (parkingSpots.isEmpty()) {
+            	System.out.println(userName + " has no parkingSpots");
+            	
+            } else {
+            	 for (Entity parkingSpot : parkingSpots) {
+            		 Map<String, String> parkingSpotMap = new HashMap<String, String>();
+            		 
+            		 parkingSpotMap.put("owner", parkingSpot.getProperty("owner").toString());
+            		 parkingSpotMap.put("address", parkingSpot.getProperty("address").toString());
+            		 parkingSpotMap.put("longitude", parkingSpot.getProperty("longitude").toString());
+            		 parkingSpotMap.put("latitude", parkingSpot.getProperty("latitude").toString());
+            		 parkingSpotMap.put("hourly_rate", parkingSpot.getProperty("hourly_rate").toString());
+            		            		 
+            		 parkingSpotsList.add(parkingSpotMap);            		             		 
             	 }
             }
             
@@ -101,48 +118,98 @@
             //GENERATE HTML OUTPUT
             //=====================
             String outputString = "";
-          	
-            pageContext.setAttribute("outputString", outputString);
             
-            outputString += "<ul>";            
-            for(Map booking : bookingsList)
-            {
-            	outputString += "<li>";            	
-            	outputString += "<ul>";            	
-            	for(Object key : booking.keySet())
-            	{
-            		outputString += "<li>";
-            		outputString += key.toString() + ": " + booking.get(key); 
-            		outputString += "</li>";
-            	}
-            	outputString += "</u>";
-            	outputString += "</li>";
-            }            
-            outputString += "</u>";
+            outputString += "<h3> Bookings </h3> ";
+            if(generateHTMLOutput(bookingsList) != null)            	
+            	outputString += generateHTMLOutput(bookingsList);            
+            else
+            	outputString += "<p>" + userName + " has no bookings </p> ";
             
+            outputString += " <br> ";
+            
+            outputString += "<h3> Parking Spots </h3> ";
+            if(generateHTMLOutput(parkingSpotsList) != null)
+            	outputString += generateHTMLOutput(parkingSpotsList);
+            else
+            	outputString += "<p>" + userName + " has no parking Spots</p> ";
+            
+            pageContext.setAttribute("outputString", outputString);	
+            	
             //test
             System.out.println("outputString: " + outputString);
-          %>
           
+          	
+          	
+          %>
+                             
+          
+          <%!
+          //A method that handles the query based on the parameters and
+          //returns the results of the queray as a list of attributes
+          List<Entity> doQuery(String keyKind, String ParkingSpotName, String QueryKind, String sortByAttribute, String filterProperty, String filterValue){
+        	  DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        	  
+        	  Key Key = KeyFactory.createKey(keyKind, ParkingSpotName);
+        	  // Run an ancestor query to ensure we see the most up-to-date
+        	  // view of the Greetings belonging to the selected Guestbook.
+        	  
+        	  Query query = new Query(QueryKind, Key);
+        	  query.addSort(sortByAttribute, Query.SortDirection.DESCENDING);
+        	  query.setFilter(new FilterPredicate(filterProperty, FilterOperator.EQUAL, filterValue));
+        	  
+        	  List<Entity> attributesList = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
+        	  
+        	  return attributesList;
+          }
+          %>          
+          
+          <%!
+          //A method that takes a list of attributes and returns an 
+          //html unsorted list string of these attributes
+          String generateHTMLOutput(List<Map<String, String>> attributesList){
+        	  String outputString = "";
+        	  
+        	  if(attributesList.isEmpty()){
+        		  outputString = null;
+        		  
+        	  } else {
+        		  outputString += "<ul>";
+        		  for(Map<String, String> attribute : attributesList)
+        		  {
+        			  outputString += "<li>";
+        			  outputString += "<ul>";
+        			  for(Object key : attribute.keySet())
+        			  {
+        				  outputString += "<li>";
+        				  outputString += key.toString() + ": " + attribute.get(key);
+        				  outputString += "</li>";
+        			  }
+        			  outputString += "</u>";
+        			  outputString += "</li>";
+        		  }
+        		  outputString += "</u>";
+        	  }
+        	  
+        	  return outputString;
+          }          
+          %>
           
 			
 	<t:page_template>
 
 
 		<jsp:attribute name="main_content">
-
-		
-			Welcome user <span id="userName" style="color:red">  </span>
+					
 			<p>Welcome user ${fn:escapeXml(userName)} </p>
+			
 									
-			${outputString}
+			${outputString}	
 			
 			
  		</jsp:attribute>
  		
-	</t:page_template>
+	</t:page_template>	
 	
-	<input type="hidden" id="user" value="${fn:escapeXml(user)}"/>
   
   </body>
 </html>
