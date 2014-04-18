@@ -12,13 +12,18 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
     
 <!-- Java Servlets Mapping -->
     <servlet-mapping>
-        <servlet-name>rent_out_servlet</servlet-name>
-        <url-pattern>/rent_out_servlet/*</url-pattern>
+        <servlet-name>register_spot_servlet</servlet-name>
+        <url-pattern>/register_spot_servlet/*</url-pattern>
     </servlet-mapping>
     
       <servlet-mapping>
         <servlet-name>make_booking</servlet-name>
         <url-pattern>/make_booking/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>parking_spot_servlet</servlet-name>
+        <url-pattern>/parking_spot_servlet/*</url-pattern>
     </servlet-mapping>
 <!-- JSP Mapping  -->
 
@@ -33,19 +38,23 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
     </servlet-mapping>    
     
     <servlet-mapping>
-        <servlet-name>rent_out_spots</servlet-name>
-        <url-pattern>/rent_out_spots/*</url-pattern>
+        <servlet-name>register_spot</servlet-name>
+        <url-pattern>/register_spot/*</url-pattern>
     </servlet-mapping>
         
   
 <!-- Java Servlets  -->
         
      <servlet>
-        <servlet-name>rent_out_servlet</servlet-name>
-        <servlet-class>parking.RentOutServlet</servlet-class>
+        <servlet-name>register_spot_servlet</servlet-name>
+        <servlet-class>parking.RegisterSpotServlet</servlet-class>
     </servlet>
        
-       
+    <servlet>
+        <servlet-name>parking_spot_servlet</servlet-name>
+        <servlet-class>parking.ParkingServlet</servlet-class>
+    </servlet> 
+    
     <servlet>
         <servlet-name>make_booking</servlet-name>
         <servlet-class>parking.MakeBookingServlet</servlet-class>
@@ -64,8 +73,8 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
     </servlet>
     
     <servlet>
-        <servlet-name>rent_out_spots</servlet-name>
-		<jsp-file>/jsp/rent_out_spots.jsp</jsp-file>
+        <servlet-name>register_spot</servlet-name>
+		<jsp-file>/jsp/register_spot.jsp</jsp-file>
     </servlet>
     
 

@@ -12,7 +12,7 @@
   				<li><a href="/">Home</a></li>
   				<li><a href="/my_account">My Account</a></li>
   				<li><a href="/find_spots">Find Spots</a></li>
-  				<li><a href="/rent_out_spots">Rent Out Spots</a></li>
+  				<li><a href="/register_spot">Register Your ParkingSpot</a></li>
 			</ul>
 		</div>
 

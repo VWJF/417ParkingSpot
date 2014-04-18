@@ -62,9 +62,9 @@ function parking_map()
 
 }
 
-// Creates a map onto to canvas usign persons geolocation
-// Call this by parking_map(your instance).load_map_for_current_location();
-parking_map.prototype.load_map_for_current_location = function()
+// Creates a map onto to canvas using persons geolocation and load all the parking spot markers
+// Call this by parking_map(your instance).find_parking_map_for_current_location
+parking_map.prototype.find_parking_map_for_current_location = function(registerMenuStringBuilder)
 {
 	var browserSupportFlag =  new Boolean();
 	var current = this;
@@ -75,7 +75,7 @@ parking_map.prototype.load_map_for_current_location = function()
 
 		navigator.geolocation.getCurrentPosition(function(position) {
 			current.load_map(position.coords.latitude, position.coords.longitude);
-			
+			current.load_parking_spots_onto_map(registerMenuStringBuilder);
 			
 		}, function() {
 
@@ -102,12 +102,62 @@ parking_map.prototype.load_map_for_current_location = function()
 
 }
 
+//Load all the markers for the given parking spots with infowindwo containing the contentString built 
+// By the callback functiob contentStringBuilder
+parking_map.prototype.load_parking_spots_onto_map = function(contentStringBuilder)
+{
+	var current = this;
+	var url = "/parking_spot_servlet/";
+
+	$.ajax({
+		url: url,
+		dataType: 'json',
+		type: 'post',
+		data: { request_type: "ALL"},
+		success: function (result) {
+
+			if(result.status == true)
+			{
+				current.load_parking_spot_markers(result.parking_spots, contentStringBuilder);
+			}
+			else
+			{
+				alert('Error Loading map! Try again later');
+			}
+
+		},
+
+		error: function(xhr, textStatus, errorThrown){
+			alert('request failed');
+		}
+	});	
+}
+
+//Load all the markers for the given parking spots with infowindow containing the contentString
+parking_map.prototype.load_parking_spot_markers = function(parking_spots, contentStringBuilder)
+{
+	var current = this;
+	
+	$.each(parking_spots, function( index, spot ) {
+
+		var marker = new google.maps.Marker({
+			position: new google.maps.LatLng(spot.latitude, spot.longitude),
+			map: current.map,
+		});
+		
+		var contentString = contentStringBuilder(spot);
+		
+	    current.add_info_window(contentString, marker);
+
+	});
+	
+}
 
 
 
 //Finds the position of the address (long/lat) for registering/renting out a spot
 //Call this by parking_map(your instance).add_new_marker_by_address();
-parking_map.prototype.add_new_rent_marker_by_address = function(address_val) {
+parking_map.prototype.add_new_register_marker_by_address = function(address_val) {
 	
 	var current = this;
 	
@@ -123,9 +173,9 @@ parking_map.prototype.add_new_rent_marker_by_address = function(address_val) {
 				map: current.map,
 			});
 			
-		    var contentString =  "<div id ='rent_out_menu'>"
+		    var contentString =  "<div id ='register_menu'>"
 				 + "<p id='address_title'>" + current.selected_address + "</p><br>"
-				 + "<form id='rent_out_form' action='post'>"
+				 + "<form id='register_form' action='post'>"
 				 + "<input type='hidden' id ='latitude' name='latitude' value='" + position_val.lat() + "'>"
 				 + "<input type='hidden' id ='longitude' name='longitude' value='" + position_val.lng()+ "'>"
 				 + "<label for='hourly_rate'> Hourly Rate $ </label>"
@@ -134,6 +184,7 @@ parking_map.prototype.add_new_rent_marker_by_address = function(address_val) {
 				 + "<input type='submit' value='Rent out spot'>"
 				 + "</form>"
 				 + "</div>";
+		    
 
 		    current.add_info_window(contentString, marker);
    
@@ -145,7 +196,7 @@ parking_map.prototype.add_new_rent_marker_by_address = function(address_val) {
 }
 
 // Find the parking spots near the given address to reserve
-parking_map.prototype.find_parking_spots_nearby_address = function(address_val, start_date_hours, end_date_hours) {
+parking_map.prototype.find_parking_spots_nearby_address = function(address_val, registerMenuStringBuilder) {
 	
 	var current = this;
 	
@@ -155,25 +206,8 @@ parking_map.prototype.find_parking_spots_nearby_address = function(address_val, 
 		if (status == google.maps.GeocoderStatus.OK) {
 			var position_val = results[0].geometry.location;
 			current.map.setCenter(position_val);
+			current.load_parking_spots_onto_map(registerMenuStringBuilder);
 
-			// TEST MARKER
-			var marker = new google.maps.Marker({
-				position: position_val,
-				map: current.map,
-			});
-		    var contentString =  "<div id ='reserve_spot_menu'>"
-				 + "<p id='address_title'>" + current.selected_address + "</p><br>"
-				 + "<form id='reservation_form' action='post'>"
-				 + "<input type='hidden' id ='latitude' name='latitude' value='" + position_val.lat() + "'>"
-				 + "<input type='hidden' id ='longitude' name='longitude' value='" + position_val.lng()+ "'>"
-				 + "<input id ='address_value' name='address_value' type='hidden' value='" + current.selected_address  + "'><br><br>"
-				 + "<input id ='start_date_hours' name='start_date_hours' type='hidden' value='" + start_date_hours + "'><br><br>"
-				 + "<input id ='end_date_hours' name='end_date_hours' type='hidden' value='" + end_date_hours + "'><br><br>"
-				 + "<input type='submit' value='Reserve Spot'>"
-				 + "</form>"
-				 + "</div>";
-		    
-		    current.add_info_window(contentString, marker);
 
 		} else {
 			alert('Geocode was not successful for the following reason: ' + status);
