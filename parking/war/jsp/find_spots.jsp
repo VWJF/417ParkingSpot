@@ -33,7 +33,21 @@
   </head>
   <body>
 
-   
+         <!-- CHECKED LOGGED IN -->
+		 <% 
+			UserService userService = UserServiceFactory.getUserService();
+        	User user = userService.getCurrentUser();
+
+      		// Successful log in then
+       		if (user != null) {
+       	      pageContext.setAttribute("user", user);
+       		 } 
+        	else {
+        		response.sendRedirect(userService.createLoginURL(request.getRequestURI()));
+
+       		 }
+          %>		
+          
 	<t:page_template>
 		<jsp:attribute name="main_content">
 			<form id ='search_form' action='post'>
