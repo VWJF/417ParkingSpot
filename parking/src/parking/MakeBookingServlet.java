@@ -14,6 +14,7 @@ import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
+import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
@@ -24,6 +25,8 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -66,10 +69,14 @@ public class MakeBookingServlet extends HttpServlet {
 		//Desired format for datastore
 	    double longitude = Double.parseDouble(longitude_str );
 	    double latitude = Double.parseDouble(latitude_str);
+	    long start_date_ms = Long.parseLong(req.getParameter("start_date_hours"));
 	    long end_date_ms = Long.parseLong(req.getParameter("end_date_hours"));
-	    long start_date_ms = Long.parseLong(req.getParameter("end_date_hours"));
 
-		
+	    Date start = new Date(start_date_ms);
+	    Date end = new Date(end_date_ms);
+	    
+	    System.out.println("Start: "+start+" End: "+end);
+	    
 		//Create a new Booking entity.
 		String booking_key = user +"_" + start_date_ms_str + "_" + end_date_ms_str;
 		//Key BookingKey = KeyFactory.createKey("Booking", booking_key);
@@ -124,13 +131,14 @@ public class MakeBookingServlet extends HttpServlet {
 							+start_date_ms+", "+end_date_ms+") "+current_time +" : "+ parentParkingSpot.getProperty("address") );
 		System.out.println("parkingSpot.getKey(): "+ KeyFactory.keyToString(parentParkingSpot.getKey()));
 		try {
-			System.out.println("booking.getKey() "+KeyFactory.keyToString(datatore_booking_key));
 			System.out.println("booking.getKey().getParent() "+KeyFactory.keyToString( datastore.get(datatore_booking_key).getParent() ));
+			System.out.println("booking.getKey() "+KeyFactory.keyToString(datatore_booking_key));
 		} catch (EntityNotFoundException | NullPointerException e) {
 			if(e instanceof NullPointerException)
-				System.out.println("Booking: isConflictFreeBooking failed.");
+				System.out.println("Booking: isConflictFreeBooking blocked datastore.put(). "+ e.getLocalizedMessage());
 			if(e instanceof EntityNotFoundException)
 				System.out.println("Not able to retrive inserted Booking.");
+			//e.printStackTrace();
 		}
 	
 		System.out.println("doPost(): Booking complete with status = ("+success+").");
@@ -239,7 +247,7 @@ public class MakeBookingServlet extends HttpServlet {
 		List<Entity> booked_parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(1));
 
 		if(booked_parkingSpot.size() == 0){
-			System.out.println("    isConflictFreeBooking(): Previous ParkingSpot Not found.");
+			System.out.println("    isConflictFreeBooking(): Parent ParkingSpot Not found.");
 
 			return true;
 		}
@@ -301,26 +309,11 @@ public class MakeBookingServlet extends HttpServlet {
 				new FilterPredicate("start_date_ms",
 						FilterOperator.GREATER_THAN_OR_EQUAL,
 						booking_end_time);
-	
-		// Construct filters that detect conflicting Bookings. 
-		// Filters will obtain the Conflicting Bookings, 
-		// if 0 Bookings match the filters, then Conflicting Bookings DO NOT EXIST.
-		// if >0 Bookings match the filters, then Conflicting Bookings EXIST.
-
-		Filter startRangeConflictFilter =
-				CompositeFilterOperator.and(startAboveMinFilter, startBelowMaxFilter);
-
-		Filter endRangeConflictFilter =
-				CompositeFilterOperator.and(endBelowMaxFilter, endAboveMinFilter);
-
-			Filter MinRangeConflictFilter =
-					CompositeFilterOperator.and(startAboveMinFilter, endAboveMinFilter);
-			
-			Filter MaxRangeConflictFilter =
-					CompositeFilterOperator.and(startBelowMaxFilter, endAboveMinFilter);
 					
 		////////////////////////////////////////////////////////////
-					
+		//FIXME: Maybe. Conflict Bookings are detected, but they seem to detects incorrect conflict Bookings	
+		// Maybe needs to be FIXME
+		
 		//startBelowMinFilter and endAboveMinFilter
 		
 		Filter BookingendAboveDatastartFilter =
@@ -338,23 +331,73 @@ public class MakeBookingServlet extends HttpServlet {
 					booking_start_time - booking_duration);
 		Filter endAfterDataEndRangeConflictFilter =
 				CompositeFilterOperator.and(endAboveMaxFilter, BookingstartBelowDataendFilter);
+		
+		//Query q_start_before = new Query("Booking").setAncestor(parent_key)..addSort("start_date_ms", SortDirection.ASCENDING).setFilter(startBeforeDataStartConflictFilter);
+		//Query q_end_after = new Query("Booking").setAncestor(parent_key)..addSort("end_date_ms", SortDirection.ASCENDING).setFilter(endAfterDataEndRangeConflictFilter);
 
+		/////////////////////////////////////////////////////
+		//FIXME: Attempting to correct wrong behaviour above.	
+				
+		Filter BookingstartBelowDatastartFilter =
+				new FilterPredicate("start_date_ms",
+						FilterOperator.GREATER_THAN_OR_EQUAL,
+						booking_start_time);
+		
+		Filter BookingStartDurationAboveDatastartFilter =
+				new FilterPredicate("start_date_ms",
+					FilterOperator.LESS_THAN_OR_EQUAL,
+					booking_start_time + booking_duration);
+		
+		Filter startDurationDataStartConflictFilter =
+				CompositeFilterOperator.and(BookingstartBelowDatastartFilter, BookingStartDurationAboveDatastartFilter);
+		
+		Filter BookingendAboveDataendFilter =
+				new FilterPredicate("end_date_ms",
+						FilterOperator.LESS_THAN,
+						booking_end_time);
+		Filter BookingEndDurationAboveDataendFilter =
+				new FilterPredicate("end_date_ms",
+						FilterOperator.GREATER_THAN_OR_EQUAL,
+						booking_end_time-booking_duration);
+		
+		Filter endDurationDataStartConflictFilter =
+				CompositeFilterOperator.and(BookingendAboveDataendFilter, BookingEndDurationAboveDataendFilter);
+		
+		Query q_start_before = new Query("Booking").setAncestor(parent_key).addSort("start_date_ms", SortDirection.ASCENDING).setFilter(startDurationDataStartConflictFilter);
+		Query q_end_after = new Query("Booking").setAncestor(parent_key).addSort("end_date_ms", SortDirection.ASCENDING).setFilter(endDurationDataStartConflictFilter);
 
-		//Filter conflictFilter =
-		//		CompositeFilterOperator.or(parkingSpotWithStartRangeConflict, parkingSpotWithEndRangeConflict);
+		
+		PreparedQuery pq_before = datastore.prepare(q_start_before);
+		List<Entity> result_start_before = pq_before.asList(FetchOptions.Builder.withLimit(10));
+		PreparedQuery pq_after = datastore.prepare(q_end_after);
+		List<Entity> result_end_after = pq_after.asList(FetchOptions.Builder.withLimit(10));
 
-		Query q_start_before = new Query("Booking").setAncestor(parent_key).setFilter(startBeforeDataStartConflictFilter);
-		Query q_end_after = new Query("Booking").setAncestor(parent_key).setFilter(startBeforeDataStartConflictFilter);
+		System.out.println("    Number of conflict Bookings in datastore with CurrentBooking.start_time < DatastoreBooking.start_time: "
+										+result_start_before.size());
+		if( !result_start_before.isEmpty())
+			System.out.println("    Key of conflict Bookings in datastore with CurrentBooking.start_time < DatastoreBooking.start_time: "
+				+KeyFactory.keyToString(result_start_before.get(0).getKey()));
+		System.out.println("    Number of conflict Bookings in datastore with CurrentBooking.end_time > DatastoreBooking.end_time: "
+										+result_end_after.size());
+		if( !result_end_after.isEmpty()) System.out.println("    Key of conflict Bookings in datastore with CurrentBooking.start_time < DatastoreBooking.start_time: "
+										+KeyFactory.keyToString(result_end_after.get(0).getKey()));
 
-		PreparedQuery pq = datastore.prepare(q_start_before);
-		List<Entity> result_start_before = pq.asList(FetchOptions.Builder.withLimit(10));
-		pq = datastore.prepare(q_end_after);
-		List<Entity> result_end_after = pq.asList(FetchOptions.Builder.withLimit(10));
+		HashSet<Key> intersection = new HashSet<Key>(result_start_before.size()+result_end_after.size());
+		Iterator<Entity> components = result_start_before.iterator();
+		long collisions = 0;
+		while(components.hasNext()){
+			intersection.add(components.next().getKey());
+		}
+		components = result_end_after.iterator();
+		while(components.hasNext()){
+			if(intersection.add(components.next().getKey()))
+				collisions++;
+		}
+		
+		System.out.println("    Number of conflict Bookings in datastore with DatastoreBooking.start_time < CurrentBooking.*_time < DatastoreBooking.end_time: "
+								+ collisions);
 
-		System.out.println("    Number of conflict Bookings in datastore with CurrentBooking.start_time < DatastoreBooking.start_time: "+result_start_before.size());
-		System.out.println("    Number of conflict Bookings in datastore with CurrentBooking.end_time > DatastoreBooking.end_time: "+result_end_after.size());
-
-		return ! (result_start_before.size() == 1);
+		return ! (result_start_before.size() == 1 || result_end_after.size() == 1 || collisions == 1);
 //		if(pq.asIterator().hasNext())
 //			return false;
 //		else
