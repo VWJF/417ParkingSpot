@@ -223,6 +223,9 @@ public class MakeBookingServlet extends HttpServlet {
 	private boolean isConflictFreeBooking(Key parent_key, User booking_user, double booking_lat, double booking_lng, long booking_start_time, long booking_end_time )
 			throws IOException {
 
+		long booking_duration = booking_end_time - booking_start_time;
+		assert (booking_duration >= 0);
+		
 		System.out.println("    Starting isConflictFreeBooking()");
 		
 		System.out.println("    Booking(" + booking_user + ", ParkingSpot:(" + booking_lat + ", " + booking_lng+"), "
@@ -298,7 +301,7 @@ public class MakeBookingServlet extends HttpServlet {
 				new FilterPredicate("start_date_ms",
 						FilterOperator.GREATER_THAN_OR_EQUAL,
 						booking_end_time);
-
+	
 		// Construct filters that detect conflicting Bookings. 
 		// Filters will obtain the Conflicting Bookings, 
 		// if 0 Bookings match the filters, then Conflicting Bookings DO NOT EXIST.
@@ -310,21 +313,48 @@ public class MakeBookingServlet extends HttpServlet {
 		Filter endRangeConflictFilter =
 				CompositeFilterOperator.and(endBelowMaxFilter, endAboveMinFilter);
 
+			Filter MinRangeConflictFilter =
+					CompositeFilterOperator.and(startAboveMinFilter, endAboveMinFilter);
+			
+			Filter MaxRangeConflictFilter =
+					CompositeFilterOperator.and(startBelowMaxFilter, endAboveMinFilter);
+					
+		////////////////////////////////////////////////////////////
+					
+		//startBelowMinFilter and endAboveMinFilter
+		
+		Filter BookingendAboveDatastartFilter =
+				new FilterPredicate("start_date_ms",
+					FilterOperator.LESS_THAN_OR_EQUAL,
+					booking_start_time + booking_duration);
+		Filter startBeforeDataStartConflictFilter =
+				CompositeFilterOperator.and(startBelowMinFilter, BookingendAboveDatastartFilter);
+		
+		//endAboveMaxFilter and startBelowMax
+		
+		Filter BookingstartBelowDataendFilter =
+				new FilterPredicate("end_date_ms",
+					FilterOperator.GREATER_THAN_OR_EQUAL,
+					booking_start_time - booking_duration);
+		Filter endAfterDataEndRangeConflictFilter =
+				CompositeFilterOperator.and(endAboveMaxFilter, BookingstartBelowDataendFilter);
 
-		//Filter parkingSpotWithStartRangeConflict =
-		//		CompositeFilterOperator.and(parkingSpotFilter, startRangeConflictFilter);
-
-		//Filter parkingSpotWithEndRangeConflict =
-		//		CompositeFilterOperator.and(parkingSpotFilter, endRangeConflictFilter);
 
 		//Filter conflictFilter =
 		//		CompositeFilterOperator.or(parkingSpotWithStartRangeConflict, parkingSpotWithEndRangeConflict);
 
-		Query q = new Query("Booking").setAncestor(parent_key).setFilter(startRangeConflictFilter);
-		PreparedQuery pq = datastore.prepare(q);
-		List<Entity> result = pq.asList(FetchOptions.Builder.withLimit(1));
-		
-		return ! (result.size() == 1);
+		Query q_start_before = new Query("Booking").setAncestor(parent_key).setFilter(startBeforeDataStartConflictFilter);
+		Query q_end_after = new Query("Booking").setAncestor(parent_key).setFilter(startBeforeDataStartConflictFilter);
+
+		PreparedQuery pq = datastore.prepare(q_start_before);
+		List<Entity> result_start_before = pq.asList(FetchOptions.Builder.withLimit(10));
+		pq = datastore.prepare(q_end_after);
+		List<Entity> result_end_after = pq.asList(FetchOptions.Builder.withLimit(10));
+
+		System.out.println("    Number of conflict Bookings in datastore with CurrentBooking.start_time < DatastoreBooking.start_time: "+result_start_before.size());
+		System.out.println("    Number of conflict Bookings in datastore with CurrentBooking.end_time > DatastoreBooking.end_time: "+result_end_after.size());
+
+		return ! (result_start_before.size() == 1);
 //		if(pq.asIterator().hasNext())
 //			return false;
 //		else
