@@ -41,7 +41,7 @@ $(document).ready(function() {
 		    		longitude: $('#longitude').val(), 
 		    		address_value: $('#address_value').val(),
 		    		end_date_hours: end_date_hours,
-		    		start_date_hours: start_date_hours,
+		    		start_date_hours: start_date_hours
 		    	},
 		    success: function (result) {
 
