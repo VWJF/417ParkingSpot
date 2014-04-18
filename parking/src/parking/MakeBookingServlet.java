@@ -6,6 +6,7 @@ import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.Entity;
 import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
+import com.google.appengine.api.datastore.GeoPt;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
 import com.google.appengine.api.datastore.PreparedQuery;
@@ -67,11 +68,10 @@ public class MakeBookingServlet extends HttpServlet {
 
 		
 		//Desired format for datastore
-	    double longitude = Double.parseDouble(longitude_str );
-	    double latitude = Double.parseDouble(latitude_str);
+	    float longitude = Float.parseFloat(longitude_str);
+	    float latitude = Float.parseFloat(latitude_str);
 	    long start_date_ms = Long.parseLong(req.getParameter("start_date_hours"));
 	    long end_date_ms = Long.parseLong(req.getParameter("end_date_hours"));
-	    end_date_ms -=1;
 
 	    Date start = new Date(start_date_ms);
 	    Date end = new Date(end_date_ms);
@@ -114,6 +114,10 @@ public class MakeBookingServlet extends HttpServlet {
 		booking.setProperty("start_date_ms", start_date_ms);
 		booking.setProperty("end_date_ms", end_date_ms);
 		
+		booking.setProperty("start_date", start);
+		booking.setProperty("end_date", end);
+		booking.setProperty("coordinates", new GeoPt(latitude, longitude));
+		
 		
 		// Check for conflicts with other Bookings, add the Booking to the datastore if it is conflict free.
 		
@@ -132,8 +136,13 @@ public class MakeBookingServlet extends HttpServlet {
 							+start_date_ms+", "+end_date_ms+") "+current_time +" : "+ parentParkingSpot.getProperty("address") );
 		System.out.println("parkingSpot.getKey(): "+ KeyFactory.keyToString(parentParkingSpot.getKey()));
 		try {
+			Entity booked = datastore.get(datatore_booking_key);
 			System.out.println("booking.getKey().getParent() "+KeyFactory.keyToString( datastore.get(datatore_booking_key).getParent() ));
 			System.out.println("booking.getKey() "+KeyFactory.keyToString(datatore_booking_key));
+			System.out.println("Booked.Date() [start,end]: "+(Date) booked.getProperty("start_date")+", "+(Date) booked.getProperty("end_date"));
+			System.out.println("Booked.GeoPt(): "+(GeoPt) booked.getProperty("coordinates"));
+
+
 		} catch (EntityNotFoundException | NullPointerException e) {
 			if(e instanceof NullPointerException)
 				System.out.println("Booking: isConflictFreeBooking blocked datastore.put(). "+ e.getLocalizedMessage());
@@ -191,8 +200,7 @@ public class MakeBookingServlet extends HttpServlet {
 		// Run an ancestor query to ensure we see the most up-to-date
 		// view of the Greetings belonging to the selected Guestbook.
 
-		Query query = new Query("parkingspot", ParkingSpotKey);
-		
+		Query query = new Query("parkingspot", ParkingSpotKey);		
 		
 		List<Entity> parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(1));
 		if(parkingSpot.size() == 1){
@@ -217,8 +225,8 @@ public class MakeBookingServlet extends HttpServlet {
 	 * Helper method that queries the Datastore for Booking entities and compares the results with the 
 	 * provided Booking entity parameters provided. 
 	 * Uses Booking attributes start_time, end_time and ParkingSpot(latitude, longitude) to determine conflicts.
-	 * Return false if a conflicting Booking is found. 
-	 * Returns true if a conflicting Booking is not found.
+	 * Return false if a conflicting Booking with the provided properties IS FOUND. 
+	 * Returns true if a conflicting Booking with the provided properties IS NOT FOUND.
 	 * @param booking_key
 	 * @param booking_user
 	 * @param booking_lat
@@ -229,12 +237,17 @@ public class MakeBookingServlet extends HttpServlet {
 	 * @throws IOException
 	 * @throws IllegalArgumentException
 	 */
-	private boolean isConflictFreeBooking(Key parent_key, User booking_user, double booking_lat, double booking_lng, long booking_start_time, long booking_end_time )
+	private boolean isConflictFreeBooking(Key parent_key, User booking_user, float booking_lat, float booking_lng, long booking_start_time, long booking_end_time )
 			throws IOException {
 
+		
+			
 		long booking_duration = booking_end_time - booking_start_time;
 		assert (booking_duration >= 0);
 		
+		Date book_start = new Date(booking_start_time); Date book_end = new Date(booking_end_time);
+		Date book_start_plusduration = new Date(booking_start_time+booking_duration); Date book_end_minusduration = new Date(booking_end_time-booking_duration);
+
 		System.out.println("    Starting isConflictFreeBooking()");
 		
 		System.out.println("    Booking(" + booking_user + ", ParkingSpot:(" + booking_lat + ", " + booking_lng+"), "
@@ -242,8 +255,7 @@ public class MakeBookingServlet extends HttpServlet {
 		System.out.println("    parent.getKey(): "+ KeyFactory.keyToString(parent_key));
 
 
-		//FIXME:Currently, datastore is checked for existing Bookings with the provided parent_key for a ParkingSpot.
-
+		// If the Parent ParkingSpot does not exist, there is no use in trying to make a Booking.
 		Query query = new Query("Booking", parent_key);	
 		List<Entity> booked_parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(1));
 
@@ -255,116 +267,70 @@ public class MakeBookingServlet extends HttpServlet {
 		System.out.println("    parkingSpot.getKey(): "+ KeyFactory.keyToString(booked_parkingSpot.get(0).getKey()));
 		System.out.println("    isConflictFreeBooking(): Previous ParkingSpot Found.");
 
-		//return false;
+		///////					
+		///////////
+		////
 
+		//FIXME: TODO:
+		// My understanding of USAGE OF FILTER PREDICATE: FilterPredicate("start_date_ms", FilterOperator.GREATER_THAN_OR_EQUAL, booking_start_time);
+		// Filter Entities such that 
+		// datastore Entities with property "start_date_ms" are
+		// are GREATER_THAT_OR_EQUAL to the value of booking_start_time
 		
-		//FIXME: Incomplete:....
-		//....Problem with Filter in Query.setFilter(Filter). Filter can only operate on one property. We want to Filter by two properties (i.e. start_date & end_date)
-		
-		
-
-		// Filters to compare attributes in the data store and with an attribute from provided Booking.
-		// A property of a Booking entity from the Data-store is (<=,>=,==) to the property of the Booking provided.
-		// TODO: Check logic (greater than vs greater than or equal).
-		//Filter parkingSpotFilter =
-		//		new FilterPredicate("ParkingSpot",
-		//				FilterOperator.EQUAL,
-		//				booking_parkingSpot);
-
-		Filter startAboveMinFilter =
-				new FilterPredicate("start_date_ms",
-						FilterOperator.LESS_THAN_OR_EQUAL,
-						booking_start_time);
-
-		Filter startBelowMinFilter =
-				new FilterPredicate("start_date_ms",
-						FilterOperator.GREATER_THAN_OR_EQUAL,
-						booking_start_time);
-
-		Filter endAboveMaxFilter =
-				new FilterPredicate("end_date_ms",
-						FilterOperator.LESS_THAN_OR_EQUAL,
-						booking_end_time);
-
-		Filter endBelowMaxFilter =
-				new FilterPredicate("end_date_ms",
-						FilterOperator.GREATER_THAN_OR_EQUAL,
-						booking_end_time);
-		//////////////
-		Filter startAboveMaxFilter =
-				new FilterPredicate("end_date_ms",
-						FilterOperator.LESS_THAN_OR_EQUAL,
-						booking_start_time);
-
-		Filter startBelowMaxFilter =
-				new FilterPredicate("end_date_ms",
-						FilterOperator.GREATER_THAN_OR_EQUAL,
-						booking_start_time);
-
-		Filter endAboveMinFilter =
-				new FilterPredicate("start_date_ms",
-						FilterOperator.LESS_THAN_OR_EQUAL,
-						booking_end_time);
-
-		Filter endBelowMinFilter =
-				new FilterPredicate("start_date_ms",
-						FilterOperator.GREATER_THAN_OR_EQUAL,
-						booking_end_time);
-					
-		////////////////////////////////////////////////////////////
-		//FIXME: Maybe. Conflict Bookings are detected, but they seem to detects incorrect conflict Bookings	
-		// Maybe needs to be FIXME
-		
-		//startBelowMinFilter and endAboveMinFilter
-		
-		Filter BookingendAboveDatastartFilter =
-				new FilterPredicate("start_date_ms",
-					FilterOperator.LESS_THAN_OR_EQUAL,
-					booking_start_time + booking_duration);
-		Filter startBeforeDataStartConflictFilter =
-				CompositeFilterOperator.and(startBelowMinFilter, BookingendAboveDatastartFilter);
-		
-		//endAboveMaxFilter and startBelowMax
-		
-		Filter BookingstartBelowDataendFilter =
-				new FilterPredicate("end_date_ms",
-					FilterOperator.GREATER_THAN_OR_EQUAL,
-					booking_start_time - booking_duration);
-		Filter endAfterDataEndRangeConflictFilter =
-				CompositeFilterOperator.and(endAboveMaxFilter, BookingstartBelowDataendFilter);
-		
-		//Query q_start_before = new Query("Booking").setAncestor(parent_key)..addSort("start_date_ms", SortDirection.ASCENDING).setFilter(startBeforeDataStartConflictFilter);
-		//Query q_end_after = new Query("Booking").setAncestor(parent_key)..addSort("end_date_ms", SortDirection.ASCENDING).setFilter(endAfterDataEndRangeConflictFilter);
-
-		/////////////////////////////////////////////////////
-		//FIXME: Attempting to correct wrong behaviour above.	
-				
+		/////
+		// Filter A: See definition in Spreadsheet.
+		/////
 		Filter BookingstartBelowDatastartFilter =
 				new FilterPredicate("start_date_ms",
 						FilterOperator.GREATER_THAN_OR_EQUAL,
 						booking_start_time);
-		
+		//Filter with Date Object instead of milliseconds		
+		//Filter BookingstartBelowDatastartFilter =
+		//		new FilterPredicate("start_date",
+		//				FilterOperator.GREATER_THAN_OR_EQUAL,
+		//				book_start);		
 		Filter BookingStartDurationAboveDatastartFilter =
 				new FilterPredicate("start_date_ms",
 					FilterOperator.LESS_THAN_OR_EQUAL,
 					booking_start_time + booking_duration);
+		//Filter with Date Object instead of milliseconds			
+		//Filter BookingStartDurationAboveDatastartFilter =
+		//		new FilterPredicate("start_date",
+		//			FilterOperator.LESS_THAN_OR_EQUAL,
+		//			book_start_plusduration);
 		
 		Filter startDurationDataStartConflictFilter =
 				CompositeFilterOperator.and(BookingstartBelowDatastartFilter, BookingStartDurationAboveDatastartFilter);
 		
+		/////
+		// Filter B: See definition in Spreadsheet.
+		/////
 		Filter BookingendAboveDataendFilter =
 				new FilterPredicate("end_date_ms",
-						FilterOperator.LESS_THAN,
+						FilterOperator.LESS_THAN_OR_EQUAL,
 						booking_end_time);
+		//Filter with Date Object instead of milliseconds			
+		//Filter BookingendAboveDataendFilter =
+		//		new FilterPredicate("end_date_ms",
+		//				FilterOperator.LESS_THAN,
+		//				book_end);
+		
 		Filter BookingEndDurationAboveDataendFilter =
 				new FilterPredicate("end_date_ms",
 						FilterOperator.GREATER_THAN_OR_EQUAL,
 						booking_end_time-booking_duration);
-		
+		//Filter with Date Object instead of milliseconds			
+		//Filter BookingEndDurationAboveDataendFilter =
+		//		new FilterPredicate("end_date",
+		//				FilterOperator.GREATER_THAN_OR_EQUAL,
+		//				booking_end_minusduration);
 		Filter endDurationDataStartConflictFilter =
 				CompositeFilterOperator.and(BookingendAboveDataendFilter, BookingEndDurationAboveDataendFilter);
 		
+		
+		//Filter A:
 		Query q_start_before = new Query("Booking").setAncestor(parent_key).addSort("start_date_ms", SortDirection.ASCENDING).setFilter(startDurationDataStartConflictFilter);
+		//Filter B:
 		Query q_end_after = new Query("Booking").setAncestor(parent_key).addSort("end_date_ms", SortDirection.ASCENDING).setFilter(endDurationDataStartConflictFilter);
 
 		
@@ -383,7 +349,10 @@ public class MakeBookingServlet extends HttpServlet {
 		if( !result_end_after.isEmpty()) System.out.println("    Key of conflict Bookings in datastore with CurrentBooking.start_time < DatastoreBooking.start_time: "
 										+KeyFactory.keyToString(result_end_after.get(0).getKey()));
 
+		//Filter C: See definition in Spreadsheet. Implemented by creating HashSet of the Keys from Filter A and Filter B. 
+		//Duplicate entries in HashSet are components for Filter C.
 		HashSet<Key> intersection = new HashSet<Key>(result_start_before.size()+result_end_after.size());
+		
 		Iterator<Entity> components = result_start_before.iterator();
 		long collisions = 0;
 		while(components.hasNext()){
@@ -391,7 +360,7 @@ public class MakeBookingServlet extends HttpServlet {
 		}
 		components = result_end_after.iterator();
 		while(components.hasNext()){
-			if(intersection.add(components.next().getKey()))
+			if(intersection.add(components.next().getKey()) == false)
 				collisions++;
 		}
 		
@@ -399,10 +368,6 @@ public class MakeBookingServlet extends HttpServlet {
 								+ collisions);
 
 		return ! (result_start_before.size() == 1 || result_end_after.size() == 1 || collisions == 1);
-//		if(pq.asIterator().hasNext())
-//			return false;
-//		else
-//			return true;
 	}
 
 	/**

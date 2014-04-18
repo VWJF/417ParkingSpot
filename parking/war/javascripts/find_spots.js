@@ -14,6 +14,7 @@ $(document).ready(function() {
 		e.preventDefault(e);
 		start_date_hours= create_date($("#start_date").val() + "-" + $("#start_time").val());
 		end_date_hours= create_date($("#end_date").val() + "-" + $("#end_time").val());
+		end_date_hours = end_date_hours - 1;
 		var is_date_valid = check_dates_valid();
 
 		if($('#search_type').val() === 'current_location')
