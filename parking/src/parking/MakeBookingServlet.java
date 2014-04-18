@@ -71,7 +71,6 @@ public class MakeBookingServlet extends HttpServlet {
 	    double latitude = Double.parseDouble(latitude_str);
 	    long start_date_ms = Long.parseLong(req.getParameter("start_date_hours"));
 	    long end_date_ms = Long.parseLong(req.getParameter("end_date_hours"));
-	    
 	    end_date_ms -=1;
 
 	    Date start = new Date(start_date_ms);
@@ -355,7 +354,7 @@ public class MakeBookingServlet extends HttpServlet {
 		
 		Filter BookingendAboveDataendFilter =
 				new FilterPredicate("end_date_ms",
-						FilterOperator.LESS_THAN_OR_EQUAL,
+						FilterOperator.LESS_THAN,
 						booking_end_time);
 		Filter BookingEndDurationAboveDataendFilter =
 				new FilterPredicate("end_date_ms",
