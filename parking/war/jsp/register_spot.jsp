@@ -19,7 +19,7 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" /> 
     <meta charset="utf-8">       
     <link type="text/css" rel="stylesheet" href="/stylesheets/style.css" />
-    <link type="text/css" rel="stylesheet" href="/stylesheets/rent_out_spots.css" />
+    <link type="text/css" rel="stylesheet" href="/stylesheets/register_spot.css" />
     <link type="text/css" rel="stylesheet" href="/stylesheets/parking_map.css" />
     <script type="text/javascript"
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUiC6DA0eL6xBGKpnbmvvgW8JazAZNIAM&sensor=true">

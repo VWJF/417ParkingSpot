@@ -40,8 +40,8 @@ $(document).ready(function() {
 		    		latitude: $('#latitude').val(), 
 		    		longitude: $('#longitude').val(), 
 		    		address_value: $('#address_value').val(),
-		    		end_date_hours: end_date,
-		    		start_date_hours: start_date,
+		    		end_date_hours: end_date_hours,
+		    		start_date_hours: start_date_hours,
 		    	},
 		    success: function (result) {
 
@@ -101,14 +101,14 @@ $(document).ready(function() {
 		var contentString =  "<div id ='reserve_spot_menu'>"
 			+ "<h4 id='address_title'>" + parking_spot.address + "</h4><br>"
 			+ "<p> Owned by " + parking_spot.owner + "</p>" 
-			+ "<p> Hourly Rate: $" + parking_spot.hourly_rate + "</p>";
+			+ "<p> Hourly Rate: $" + parking_spot.hourly_rate + "</p>"
 			+ "<form id='reservation_form' action='post'>"
+			+ "<input type='submit' value='Reserve Spot'>"
 			+ "<input type='hidden' id ='latitude' name='latitude' value='" + parking_spot.latitude + "'>"
 			+ "<input type='hidden' id ='longitude' name='longitude' value='" + parking_spot.longitude + "'>"
-			+ "<input id ='address_value' name='address_value' type='hidden' value='" + parking_spot.address + "'><br><br>"
-			+ "<input id ='start_date_hours' name='start_date_hours' type='hidden' value='" + start_date_hours + "'><br><br>"
-			+ "<input id ='end_date_hours' name='end_date_hours' type='hidden' value='" + end_date_hours + "'><br><br>"
-			+ "<input type='submit' value='Reserve Spot'>"
+			+ "<input id ='address_value' name='address_value' type='hidden' value='" + parking_spot.address + "'>"
+			+ "<input id ='start_date_hours' name='start_date_hours' type='hidden' value='" + start_date_hours + "'>"
+			+ "<input id ='end_date_hours' name='end_date_hours' type='hidden' value='" + end_date_hours + "'>"
 			+ "</form>"
 			+ "</div>";
 		

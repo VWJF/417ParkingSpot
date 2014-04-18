@@ -172,7 +172,6 @@ parking_map.prototype.add_new_register_marker_by_address = function(address_val)
 				position: position_val,
 				map: current.map,
 			});
-			
 		    var contentString =  "<div id ='register_menu'>"
 				 + "<p id='address_title'>" + current.selected_address + "</p><br>"
 				 + "<form id='register_form' action='post'>"
@@ -180,11 +179,10 @@ parking_map.prototype.add_new_register_marker_by_address = function(address_val)
 				 + "<input type='hidden' id ='longitude' name='longitude' value='" + position_val.lng()+ "'>"
 				 + "<label for='hourly_rate'> Hourly Rate $ </label>"
 				 + "<input type='number' id ='hourly_rate' name='hourly_rate' min='1' value='1' required><br><br>"
-				 + "<input id ='address_value' name='address_value' type='hidden' value='" + current.selected_address  + "'><br><br>"
+				 + "<input id ='address_value' name='address_value' type='hidden' value='" + current.selected_address  + "'>"
 				 + "<input type='submit' value='Rent out spot'>"
 				 + "</form>"
 				 + "</div>";
-		    
 
 		    current.add_info_window(contentString, marker);
    
