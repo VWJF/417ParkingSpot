@@ -1,17 +1,18 @@
 $(document).ready(function() {
  
+   
 	var my_parking_map = new parking_map();
 	my_parking_map.load_map(-37.397, 155.644);
 	
 	$('#submit_address').click(function(){
 		
-		my_parking_map.add_new_rent_marker_by_address($('#address').val());
+		my_parking_map.add_new_register_marker_by_address($('#address').val());
 	});
 	
-	$(document).on('submit','#rent_out_form', function(e){
+	$(document).on('submit','#register_form', function(e){
 		 e.preventDefault(e);
 
-		var url = "/rent_out_servlet/";
+		var url = "/register_spot_servlet/";
 
 		    $.ajax({
 		    	url: url,
@@ -25,11 +26,11 @@ $(document).ready(function() {
 
 		    		if(result.status == true)
 		    	    {
-		    			$("#rent_out_menu").html("Successfully Registered Spot for Renting!<br> Thank You!");
+		    			$("#register_menu").html("Successfully Registered Spot for Renting!<br> Thank You!");
 		    	    }
 		    		else
 		    		{
-		    			$("#rent_out_menu").html("Spot has already been registered!");
+		    			$("#register_menu").html("Spot has already been registered!");
 
 		    		}
 

@@ -21,7 +21,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 @SuppressWarnings("serial")
-public class RentOutServlet extends HttpServlet {
+public class RegisterSpotServlet extends HttpServlet {
 	
 	private DatastoreService datastore;
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -59,14 +59,16 @@ public class RentOutServlet extends HttpServlet {
 			success = true;
 		}
 		
-		
+
 		try {
 			resultJson.put("status", success);
-	        resp.setContentType("json");
-			resp.getWriter().println(resultJson);     
 		} catch (JSONException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	    resp.setContentType("json");
+	    resp.getWriter().println(resultJson);     
+
 		
 	}
 	

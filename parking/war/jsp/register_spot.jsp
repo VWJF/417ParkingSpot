@@ -19,14 +19,14 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no" /> 
     <meta charset="utf-8">       
     <link type="text/css" rel="stylesheet" href="/stylesheets/style.css" />
-    <link type="text/css" rel="stylesheet" href="/stylesheets/rent_out_spots.css" />
+    <link type="text/css" rel="stylesheet" href="/stylesheets/register_spot.css" />
     <link type="text/css" rel="stylesheet" href="/stylesheets/parking_map.css" />
     <script type="text/javascript"
       src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAUiC6DA0eL6xBGKpnbmvvgW8JazAZNIAM&sensor=true">
     </script>   
     <script src='http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js' type='text/javascript'></script>  
     <script src='javascripts/parking_map.js' type='text/javascript'></script>  
-    <script src='javascripts/rent_out_spots.js' type='text/javascript'></script>  
+    <script src='javascripts/register_spot.js' type='text/javascript'></script>  
 	    
   </head>
   <body>

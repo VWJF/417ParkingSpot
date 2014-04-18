@@ -1,0 +1,9 @@
+.listElement {
+	border-style:ridge;
+	border-width:5px;
+	border-color:red;
+	background: #9999FF;
+	
+	margin-bottom:5px;
+	color: #000000;
+}
