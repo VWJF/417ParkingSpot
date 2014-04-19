@@ -14,6 +14,7 @@ $(document).ready(function() {
 		e.preventDefault(e);
 		start_date_hours= create_date($("#start_date").val() + "-" + $("#start_time").val());
 		end_date_hours= create_date($("#end_date").val() + "-" + $("#end_time").val());
+		end_date_hours = end_date_hours - 1;
 		var is_date_valid = check_dates_valid();
 
 		if($('#search_type').val() === 'current_location')
@@ -41,17 +42,17 @@ $(document).ready(function() {
 		    		longitude: $('#longitude').val(), 
 		    		address_value: $('#address_value').val(),
 		    		end_date_hours: end_date_hours,
-		    		start_date_hours: start_date_hours,
+		    		start_date_hours: start_date_hours
 		    	},
 		    success: function (result) {
 
 		    		if(result.status == true)
 		    	    {
-		    			alert('success!');
+		    			alert('Successfully added Booking!'); //Successfully added Booking to datastore.
 		    	    }
 		    		else
 		    		{
-
+		    			alert('Failed. Failure in adding Booking!'); //Failed to add Booking to datastore. Servlet Error.
 		    		}
 
 		        },

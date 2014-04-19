@@ -15,7 +15,12 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <servlet-name>register_spot_servlet</servlet-name>
         <url-pattern>/register_spot_servlet/*</url-pattern>
     </servlet-mapping>
-    
+
+ <!--  <servlet-mapping>
+        <servlet-name>make_booking_servlet</servlet-name>
+        <url-pattern>/make_booking_servlet/*</url-pattern>
+    </servlet-mapping>
+-->       
       <servlet-mapping>
         <servlet-name>make_booking</servlet-name>
         <url-pattern>/make_booking/*</url-pattern>
@@ -36,19 +41,31 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <servlet-name>find_spots</servlet-name>
         <url-pattern>/find_spots/*</url-pattern>
     </servlet-mapping>    
-    
+        
     <servlet-mapping>
         <servlet-name>register_spot</servlet-name>
         <url-pattern>/register_spot/*</url-pattern>
     </servlet-mapping>
-        
+
+            
+     <servlet-mapping>
+        <servlet-name>make_booking</servlet-name>
+        <url-pattern>/make_booking/*</url-pattern>
+    </servlet-mapping>
+            
   
 <!-- Java Servlets  -->
-        
-     <servlet>
+    
+    <servlet>
         <servlet-name>register_spot_servlet</servlet-name>
         <servlet-class>parking.RegisterSpotServlet</servlet-class>
     </servlet>
+
+<!--    <servlet>
+        <servlet-name>make_booking_servlet</servlet-name>
+        <servlet-class>com.eece417.ParkingSpot.server.MakeBooking</servlet-class>
+    </servlet>
+-->    
        
     <servlet>
         <servlet-name>parking_spot_servlet</servlet-name>
@@ -67,7 +84,7 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<jsp-file>/jsp/my_account.jsp</jsp-file>
     </servlet>
     
-	<servlet>
+ 	<servlet>
         <servlet-name>find_spots</servlet-name>
 		<jsp-file>/jsp/find_spots.jsp</jsp-file>
     </servlet>
@@ -77,8 +94,11 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
 		<jsp-file>/jsp/register_spot.jsp</jsp-file>
     </servlet>
     
-
-
+<!--    <servlet>
+        <servlet-name>make_booking</servlet-name>
+		<jsp-file>/jsp/make_booking.jsp</jsp-file>
+    </servlet>
+-->
 	
 	
 	
