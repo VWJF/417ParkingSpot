@@ -109,10 +109,11 @@ public class MakeBookingServlet extends HttpServlet {
 		booking.setProperty("longitude", longitude);
 		booking.setProperty("start_date_ms", start_date_ms);
 		booking.setProperty("end_date_ms", end_date_ms);
-		booking.setProperty("end_date_ms", end_date_ms);
+		booking.setProperty("reservation_date_ms", current_time.getTime());
 		booking.setProperty("address", address);
 		booking.setProperty("start_date", start);
 		booking.setProperty("end_date", end);
+		booking.setProperty("reservation_date", current_time);
 		booking.setProperty("coordinates", new GeoPt(latitude, longitude));
 
 
@@ -242,7 +243,7 @@ public class MakeBookingServlet extends HttpServlet {
 		System.out.println("    Booking(" + booking_user + ", ParkingSpot:(" + booking_lat + ", " + booking_lng+"), "
 				+booking_start_time+", "+booking_end_time+", "+current_time +")");
 		System.out.println("    parent.getKey(): "+ KeyFactory.keyToString(parent_key));
-
+		System.out.println("    parkingSpot.getKey(): "+ KeyFactory.keyToString(parent_key));
 
 		// If the Parent ParkingSpot does not exist, there is no use in trying to make a Booking.
 		Query query = new Query("Booking", parent_key);	
@@ -253,7 +254,8 @@ public class MakeBookingServlet extends HttpServlet {
 
 			return true;
 		}
-		System.out.println("    parkingSpot.getKey(): "+ KeyFactory.keyToString(booked_parkingSpot.get(0).getKey()));
+		System.out.println("    booking.getKey(): "+ KeyFactory.keyToString(booked_parkingSpot.get(0).getKey()));
+		System.out.println("    booking.getParent(): "+ KeyFactory.keyToString(booked_parkingSpot.get(0).getParent()));
 		System.out.println("    isConflictFreeBooking(): Previous ParkingSpot Found.");
 
 		// My understanding of USAGE OF FILTER PREDICATE: FilterPredicate("start_date_ms", FilterOperator.GREATER_THAN_OR_EQUAL, booking_start_time);
@@ -261,87 +263,62 @@ public class MakeBookingServlet extends HttpServlet {
 		// datastore Entities with property "start_date_ms" are
 		// are GREATER_THAT_OR_EQUAL to the value of booking_start_time
 
+		/////Find elements that lie outside [d1, d2] inclusive
+		// Equation: @d2 < start_time OR end_time < @d1.
+		// Query+Filter will return all entities satisfying the condition.
+		// Obtaining a result from the query means that the proposed 
+		// Booking(d1, d2) lies outside [datastore.start, datastore.end] and 
+		// does NOT cause a conflict
+		// Looking for results of each query to be non-empty (isEmpty() == false)
+
 		/////
-		// Filter A2: See definition in Spreadsheet.
-		/////
-		Filter BookingstartBelowDatastartFilter =
-				new FilterPredicate("start_date_ms",
-						FilterOperator.GREATER_THAN_OR_EQUAL,
-						booking_start_time);
-		//Filter with Date Object instead of milliseconds		
-		//Filter BookingstartBelowDatastartFilter =
-		//		new FilterPredicate("start_date",
-		//				FilterOperator.GREATER_THAN_OR_EQUAL,
-		//				book_start);		
+		// Query 1: start_time > @d2.
+		///// Find entities such that datastore.start_date_ms > booking_end_time (start_time > @d2)
 		Filter BookingEndBelowDatastartFilter =
 				new FilterPredicate("start_date_ms",
-						FilterOperator.GREATER_THAN_OR_EQUAL,
+						FilterOperator.GREATER_THAN,
 						booking_end_time);
-		//Filter with Date Object instead of milliseconds			
-		//Filter BookingStartDurationAboveDatastartFilter =
-		//		new FilterPredicate("start_date",
-		//			FilterOperator.LESS_THAN_OR_EQUAL,
-		//			book_start_plusduration);
-
-		Filter startDurationDataStartConflictFilter =
-				CompositeFilterOperator.and(BookingstartBelowDatastartFilter, BookingEndBelowDatastartFilter);
 
 		/////
-		// Filter B2: See definition in Spreadsheet.
-		/////
-		Filter BookingendAboveDataendFilter =
+		// Query 2: end_time < @d1.
+		///// Find entities such that datastore.end_date_ms < booking_start_time (end_time < @d1)
+		Filter BookingStartAboveDataendFilter =
 				new FilterPredicate("end_date_ms",
-						FilterOperator.LESS_THAN_OR_EQUAL,
-						booking_end_time);
-		//Filter with Date Object instead of milliseconds			
-		//Filter BookingendAboveDataendFilter =
-		//		new FilterPredicate("end_date_ms",
-		//				FilterOperator.LESS_THAN,
-		//				book_end);
-
-		Filter BookingEndAboveDataendFilter =
-				new FilterPredicate("end_date_ms",
-						FilterOperator.LESS_THAN_OR_EQUAL,
+						FilterOperator.LESS_THAN,
 						booking_start_time);
-		//Filter with Date Object instead of milliseconds			
-		//Filter BookingEndDurationAboveDataendFilter =
-		//		new FilterPredicate("end_date",
-		//				FilterOperator.GREATER_THAN_OR_EQUAL,
-		//				booking_end_minusduration);
-		Filter endDurationDataStartConflictFilter =
-				CompositeFilterOperator.and(BookingendAboveDataendFilter, BookingEndAboveDataendFilter);
+
 
 		Query ancestor_query = new Query("Booking").setAncestor(parent_key);
-		//Filter A:
+		//Query 1:
 		Query q_booking_before = new Query("Booking").setAncestor(parent_key)
 				.addSort("start_date_ms", SortDirection.DESCENDING)
-				.setFilter(startDurationDataStartConflictFilter);
-		//Filter B:
+				.setFilter(BookingEndBelowDatastartFilter);
+		//Query 2:
 		Query q_booking_after = new Query("Booking").setAncestor(parent_key)
 				.addSort("end_date_ms", SortDirection.DESCENDING)
-				.setFilter(endDurationDataStartConflictFilter);
-
+				.setFilter(BookingStartAboveDataendFilter);
+		
 
 		PreparedQuery pq_before = datastore.prepare(q_booking_before);
 		List<Entity> result_before = pq_before.asList(FetchOptions.Builder.withLimit(10));
 		PreparedQuery pq_after = datastore.prepare(q_booking_after);
 		List<Entity> result_after = pq_after.asList(FetchOptions.Builder.withLimit(10));
 
-		System.out.println("    New Booking--then---Existing Booking: "
+		System.out.println("    New Booking.end--then--Existing Booking.start: "
 				+result_before.isEmpty());
 		if( !result_before.isEmpty())
-			System.out.println("    Key of existing conflict Bookings in datastore New Booking--then---existing Booking: "
-					+KeyFactory.keyToString(result_before.get(0).getKey()));
-		System.out.println("    Existing Booking--then------New Booking: "
+			System.out.println("    Existing conflict Bookings in datastore New Booking--then--existing Booking: "
+					+"#found "+ result_before.size()+" with key "+KeyFactory.keyToString(result_before.get(0).getKey()));
+		System.out.println("    Existing Booking.end--then--New Booking.start: "
 				+result_after.isEmpty());
 		if( !result_after.isEmpty()) 
-			System.out.println("    Key of existing conflict Bookings in datastore Existing Booking--then------New Booking: "
-					+KeyFactory.keyToString(result_after.get(0).getKey()));
-
+			System.out.println("    Existing conflict Bookings in datastore Existing Booking--then--New Booking: "
+					+"#found "+ result_after.size()+" with key "+KeyFactory.keyToString(result_after.get(0).getKey()));
+		
 		//Want to return (result_start_before.isEmpty() NAND result_end_after.isEmpty())
 		// Constructed using ! (a & b). Used & to avoid short-circuiting.
 		System.out.println("    isConflictFreeBooking() response (proceed with booking): "+ !(result_before.isEmpty() & result_after.isEmpty()));
-		return !(result_before.isEmpty() & result_after.isEmpty()); 
+		return !( result_before.isEmpty() & result_after.isEmpty()); 
 	}
 
 
