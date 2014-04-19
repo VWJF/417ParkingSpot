@@ -48,11 +48,11 @@ $(document).ready(function() {
 
 		    		if(result.status == true)
 		    	    {
-		    			alert('success!');
+		    			alert('Successfully added Booking!'); //Successfully added Booking to datastore.
 		    	    }
 		    		else
 		    		{
-
+		    			alert('Failed. Failure in adding Booking!'); //Failed to add Booking to datastore. Servlet Error.
 		    		}
 
 		        },

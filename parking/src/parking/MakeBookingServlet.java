@@ -79,9 +79,7 @@ public class MakeBookingServlet extends HttpServlet {
 	    
 		//Create a new Booking entity.
 		String booking_key = user +"_" + start_date_ms_str + "_" + end_date_ms_str;
-		//Key BookingKey = KeyFactory.createKey("Booking", booking_key);
 
-		String parking_key = latitude_str + "_" + longitude_str;
 		Entity parentParkingSpot = getParkingSpots(latitude_str, longitude_str); 
 		
 		boolean success = false;
@@ -93,16 +91,13 @@ public class MakeBookingServlet extends HttpServlet {
 			return;
 		}
 		
-		//Entity booking = new Entity("Booking", "parkingspot", parentParkingSpot.getKey());
-		//Entity booking = new Entity("Booking", parentParkingSpot.getKey());
-
 		Key ancestor_path = new KeyFactory.Builder(parentParkingSpot.getKey())
         									.addChild("Booking", booking_key)
         									.getKey();
 
 		Entity booking = new Entity("Booking", ancestor_path); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
 		
-		/*deprecated:
+		/*use deprecated?:
 		 * embeddedParkingspotWithBooking(parentParkingSpot, booking);
 		 * */
 		
@@ -122,15 +117,14 @@ public class MakeBookingServlet extends HttpServlet {
 		
 		Key datatore_booking_key = null;
 
-		if( isConflictFreeBooking(parentParkingSpot.getKey(), user, latitude, longitude, start_date_ms, end_date_ms ) ){
+		if( isNonConflictBooking(parentParkingSpot.getKey(), user, latitude, longitude, start_date_ms, end_date_ms ) ){
 			datatore_booking_key = datastore.put(booking);
 			success = true;
 		}
 		else{
 			success = false;
 		}
-
-		
+	
 		System.out.println("Booking(" + user + ", ParkingSpot:(" + latitude + ", " + longitude+"), "
 							+start_date_ms+", "+end_date_ms+") "+current_time +" : "+ parentParkingSpot.getProperty("address") );
 		System.out.println("parkingSpot.getKey(): "+ KeyFactory.keyToString(parentParkingSpot.getKey()));
@@ -147,12 +141,10 @@ public class MakeBookingServlet extends HttpServlet {
 				System.out.println("Booking: isConflictFreeBooking blocked datastore.put(). "+ e.getLocalizedMessage());
 			if(e instanceof EntityNotFoundException)
 				System.out.println("Not able to retrive inserted Booking.");
-			//e.printStackTrace();
 		}
 	
-		System.out.println("doPost(): Booking complete with status = ("+success+").");
+		System.out.println("doPost(): Booking complete. Respond with status = ("+success+").");
 		
-		//success = true;
 		generateJSONResponse(resp, success);
 		
 	}
@@ -219,10 +211,141 @@ public class MakeBookingServlet extends HttpServlet {
 		return null;
 		
 	}
+	
+	/**
+	 * Helper method that queries the Datastore for Booking entities and compares the results with the 
+	 * provided Booking entity parameters provided. 
+	 * Finds NON-conflicts.
+	 * Uses Booking attributes start_time, end_time and ParkingSpot(latitude, longitude) to determine conflicts.
+	 * Return false if a the new booking WILL cause conflict with existing Booking. 
+	 * Returns true if a the new booking WILL NOT cause conflict with existing Booking.
+	 * @param booking_key
+	 * @param booking_user
+	 * @param booking_lat
+	 * @param booking_lng
+	 * @param booking_start_time
+	 * @param booking_end_time
+	 * @return
+	 * @throws IOException
+	 * @throws IllegalArgumentException
+	 */
+	private boolean isNonConflictBooking(Key parent_key, User booking_user, float booking_lat, float booking_lng, long booking_start_time, long booking_end_time )
+			throws IOException {
+
+		Date book_start = new Date(booking_start_time); Date book_end = new Date(booking_end_time); //In case implementation changes to use Date Object.
+
+		System.out.println("    Starting isConflictFreeBooking()");
+		
+		System.out.println("    Booking(" + booking_user + ", ParkingSpot:(" + booking_lat + ", " + booking_lng+"), "
+								+booking_start_time+", "+booking_end_time+", "+current_time +")");
+		System.out.println("    parent.getKey(): "+ KeyFactory.keyToString(parent_key));
+
+
+		// If the Parent ParkingSpot does not exist, there is no use in trying to make a Booking.
+		Query query = new Query("Booking", parent_key);	
+		List<Entity> booked_parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(1));
+
+		if(booked_parkingSpot.size() == 0){
+			System.out.println("    isConflictFreeBooking(): Parent ParkingSpot Not found.");
+
+			return true;
+		}
+		System.out.println("    parkingSpot.getKey(): "+ KeyFactory.keyToString(booked_parkingSpot.get(0).getKey()));
+		System.out.println("    isConflictFreeBooking(): Previous ParkingSpot Found.");
+
+		// My understanding of USAGE OF FILTER PREDICATE: FilterPredicate("start_date_ms", FilterOperator.GREATER_THAN_OR_EQUAL, booking_start_time);
+		// Filter Entities such that 
+		// datastore Entities with property "start_date_ms" are
+		// are GREATER_THAT_OR_EQUAL to the value of booking_start_time
+		
+		/////
+		// Filter A2: See definition in Spreadsheet.
+		/////
+		Filter BookingstartBelowDatastartFilter =
+				new FilterPredicate("start_date_ms",
+						FilterOperator.GREATER_THAN_OR_EQUAL,
+						booking_start_time);
+		//Filter with Date Object instead of milliseconds		
+		//Filter BookingstartBelowDatastartFilter =
+		//		new FilterPredicate("start_date",
+		//				FilterOperator.GREATER_THAN_OR_EQUAL,
+		//				book_start);		
+		Filter BookingEndBelowDatastartFilter =
+				new FilterPredicate("start_date_ms",
+					FilterOperator.GREATER_THAN_OR_EQUAL,
+					booking_end_time);
+		//Filter with Date Object instead of milliseconds			
+		//Filter BookingStartDurationAboveDatastartFilter =
+		//		new FilterPredicate("start_date",
+		//			FilterOperator.LESS_THAN_OR_EQUAL,
+		//			book_start_plusduration);
+		
+		Filter startDurationDataStartConflictFilter =
+				CompositeFilterOperator.and(BookingstartBelowDatastartFilter, BookingEndBelowDatastartFilter);
+		
+		/////
+		// Filter B2: See definition in Spreadsheet.
+		/////
+		Filter BookingendAboveDataendFilter =
+				new FilterPredicate("end_date_ms",
+						FilterOperator.LESS_THAN_OR_EQUAL,
+						booking_end_time);
+		//Filter with Date Object instead of milliseconds			
+		//Filter BookingendAboveDataendFilter =
+		//		new FilterPredicate("end_date_ms",
+		//				FilterOperator.LESS_THAN,
+		//				book_end);
+		
+		Filter BookingEndAboveDataendFilter =
+				new FilterPredicate("end_date_ms",
+						FilterOperator.LESS_THAN_OR_EQUAL,
+						booking_start_time);
+		//Filter with Date Object instead of milliseconds			
+		//Filter BookingEndDurationAboveDataendFilter =
+		//		new FilterPredicate("end_date",
+		//				FilterOperator.GREATER_THAN_OR_EQUAL,
+		//				booking_end_minusduration);
+		Filter endDurationDataStartConflictFilter =
+				CompositeFilterOperator.and(BookingendAboveDataendFilter, BookingEndAboveDataendFilter);
+		
+		Query ancestor_query = new Query("Booking").setAncestor(parent_key);
+		//Filter A:
+		Query q_booking_before = new Query("Booking").setAncestor(parent_key)
+				.addSort("start_date_ms", SortDirection.DESCENDING)
+				.setFilter(startDurationDataStartConflictFilter);
+		//Filter B:
+		Query q_booking_after = new Query("Booking").setAncestor(parent_key)
+				.addSort("end_date_ms", SortDirection.DESCENDING)
+				.setFilter(endDurationDataStartConflictFilter);
+
+		
+		PreparedQuery pq_before = datastore.prepare(q_booking_before);
+		List<Entity> result_before = pq_before.asList(FetchOptions.Builder.withLimit(10));
+		PreparedQuery pq_after = datastore.prepare(q_booking_after);
+		List<Entity> result_after = pq_after.asList(FetchOptions.Builder.withLimit(10));
+
+		System.out.println("    New Booking--then---Existing Booking: "
+										+result_before.isEmpty());
+		if( !result_before.isEmpty())
+			System.out.println("    Key of existing conflict Bookings in datastore New Booking--then---existing Booking: "
+				+KeyFactory.keyToString(result_before.get(0).getKey()));
+		System.out.println("    Existing Booking--then------New Booking: "
+										+result_after.isEmpty());
+		if( !result_after.isEmpty()) 
+			System.out.println("    Key of existing conflict Bookings in datastore Existing Booking--then------New Booking: "
+										+KeyFactory.keyToString(result_after.get(0).getKey()));
+		
+		//Want to return (result_start_before.isEmpty() NAND result_end_after.isEmpty())
+		// Constructed using ! (a & b). Used & to avoid short-circuiting.
+		System.out.println("    isConflictFreeBooking() response (proceed with booking): "+ !(result_before.isEmpty() & result_after.isEmpty()));
+		return !(result_before.isEmpty() & result_after.isEmpty()); 
+	}
+
 
 	/**
 	 * Helper method that queries the Datastore for Booking entities and compares the results with the 
 	 * provided Booking entity parameters provided. 
+	 * Finds Conflicts.
 	 * Uses Booking attributes start_time, end_time and ParkingSpot(latitude, longitude) to determine conflicts.
 	 * Return false if a conflicting Booking with the provided properties IS FOUND. 
 	 * Returns true if a conflicting Booking with the provided properties IS NOT FOUND.
@@ -239,11 +362,10 @@ public class MakeBookingServlet extends HttpServlet {
 	private boolean isConflictFreeBooking(Key parent_key, User booking_user, float booking_lat, float booking_lng, long booking_start_time, long booking_end_time )
 			throws IOException {
 
-		
-			
 		long booking_duration = booking_end_time - booking_start_time;
 		assert (booking_duration >= 0);
 		
+		//In case implementation changes to use Date Object.
 		Date book_start = new Date(booking_start_time); Date book_end = new Date(booking_end_time);
 		Date book_start_plusduration = new Date(booking_start_time+booking_duration); Date book_end_minusduration = new Date(booking_end_time-booking_duration);
 
@@ -265,10 +387,6 @@ public class MakeBookingServlet extends HttpServlet {
 		}
 		System.out.println("    parkingSpot.getKey(): "+ KeyFactory.keyToString(booked_parkingSpot.get(0).getKey()));
 		System.out.println("    isConflictFreeBooking(): Previous ParkingSpot Found.");
-
-		///////					
-		///////////
-		////
 
 		//FIXME: TODO:
 		// My understanding of USAGE OF FILTER PREDICATE: FilterPredicate("start_date_ms", FilterOperator.GREATER_THAN_OR_EQUAL, booking_start_time);
@@ -366,46 +484,11 @@ public class MakeBookingServlet extends HttpServlet {
 		System.out.println("    Number of conflict Bookings in datastore with DatastoreBooking.start_time < CurrentBooking.*_time < DatastoreBooking.end_time: "
 								+ collisions);
 
+		System.out.println("    isConflictFreeBooking() response (proceed with booking): "+ ! (result_start_before.size() == 1 || result_end_after.size() == 1 || collisions == 1));
+
 		return ! (result_start_before.size() == 1 || result_end_after.size() == 1 || collisions == 1);
 	}
 
-	/**
-	 * Helper method that converts a (pre-formated) Date representation into a Date Object to be stored in DataStore.
-	 * @param dateAsString
-	 * @return
-	 */
-	private Date asDate(String dateAsString){
-		SimpleDateFormat sdf = 
-				new SimpleDateFormat ("E yyyy.MM.dd hh:mm:ss a zzz");
-		long timeInMillisSinceEpoch = 0;
-		Date date = new Date(timeInMillisSinceEpoch);
-		try {
-			date = sdf.parse(dateAsString);
-			timeInMillisSinceEpoch = date.getTime();
-		} catch (ParseException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		long timeInMinutesSinceEpoch = timeInMillisSinceEpoch / (60 * 1000);
-		//return timeInMinutesSinceEpoch;
-		return date;
-	}
-
-	/**
-	 * Helper Methos that returns the current time in a (pre-formated) string representation 
-	 * to be saved in the Datastore.
-	 * @return
-	 */
-	private String getCurrentTimeFormatted(){
-
-		Date dNow = new Date();
-		SimpleDateFormat ft = 
-				new SimpleDateFormat ("E yyyy.MM.dd hh:mm:ss a zzz");
-
-		System.out.println("Current Date: " + ft.format(dNow));
-		return ft.format(dNow);
-	}
-	
 	/**
 	 * Alternative_#2 to ParentEntity = ParkingSpot
 	 * Properties of an embedded entity are not indexed and cannot be used in queries.
@@ -425,5 +508,6 @@ public class MakeBookingServlet extends HttpServlet {
 
 		booking.setProperty("parkingspot", embeddedParkngSpot);
 	}
+	
 
 }
