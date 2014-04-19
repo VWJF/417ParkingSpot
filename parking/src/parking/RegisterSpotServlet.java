@@ -33,7 +33,8 @@ public class RegisterSpotServlet extends HttpServlet {
 
 		UserService userService = UserServiceFactory.getUserService();
 		User user = userService.getCurrentUser();
-		
+   		if (user == null) return;
+
 		// Get values
 		String address = req.getParameter("address_value");
 		String longitude_str = req.getParameter("longitude");

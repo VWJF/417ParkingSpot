@@ -86,10 +86,10 @@ $(document).ready(function() {
 		// Format into string that must have a 0 in front of it if only 1 digit
 		month = make_double_digits(month);
 		day = make_double_digits(day);
-		hours = make_double_digits(hours);
-
-		$('#start_time').val(hours);
-		$('#end_time').val(hours);
+		var start_hours = make_double_digits(hours);
+		var end_hours = make_double_digits(hours + 1);
+		$('#start_time').val(start_hours);
+		$('#end_time').val(end_hours);
 		today = today.getFullYear() + "-" + month + "-" +  day;
 		$('#start_date').val(today);
 		$('#end_date').val(today);
@@ -130,15 +130,16 @@ $(document).ready(function() {
 	{
 		var is_date_valid = true;
 		
-		if(start_date_hours> end_date)
+		if(start_date_hours >= end_date_hours)
 		{
 			is_date_valid = false;
-			alert("Your start date can't be greater than your end date!");
+			alert("Your start date can't be greater than or equal to your end date!");
 		}
 		
 		var today_date = new Date();
 		today_date.setHours(today_date.getHours(), 0, 0, 0);
-
+		today_date = today_date.getTime();
+		
 		if(start_date_hours< today_date)
 		{
 			is_date_valid = false;

@@ -36,6 +36,10 @@ public class ParkingServlet extends HttpServlet {
 		
 		this.req = req;
 		this.resp = resp;
+		UserService userService = UserServiceFactory.getUserService();
+		User user = userService.getCurrentUser();
+   		if (user == null) return;
+
 		
 		String requestType = req.getParameter("request_type");
 		
