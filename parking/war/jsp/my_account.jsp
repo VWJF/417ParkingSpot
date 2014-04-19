@@ -38,12 +38,10 @@
   		 <!-- CHECKED LOGGED IN -->
 		 <%
 		 	//CONSTANTS
-		 	//=====================
-		 	String ParkingSpotName = "ParkingSpotApp";
-		 	String BookingQueryKind = "BookingsQuery";
+		 	//=====================		 	
+		 	String BookingQueryKind = "Booking";
 		 	String ParkingSpotQueryKind = "parkingspot";
-		 	String BookingKeyKind = "Booking";
-		 	String ParkingSpotKeyKind = "parkingspot";
+		 	
 		 	String userName = null;		 
 		 	
 		 	
@@ -64,9 +62,9 @@
       		
       		//QUERY DATA FROM DATASTORE
       		//=====================
-            List<Entity> bookings = doQuery(BookingKeyKind, ParkingSpotName, BookingQueryKind, "startDate", "username", userName);             
+            List<Entity> bookings = doQuery(BookingQueryKind, "start_date");             
                      
-            List<Entity> parkingSpots = doQuery(ParkingSpotKeyKind, ParkingSpotName, ParkingSpotQueryKind, "owner", "owner", userName);
+            List<Entity> parkingSpots = doQuery(ParkingSpotQueryKind, "owner");
             
             System.out.println("bookings: " + bookings.size() + ", parkingspots: " + parkingSpots.size());
             //PROCESS QUERY DATA 
@@ -83,13 +81,20 @@
             	 for (Entity booking : bookings) {
             		 Map<String, String> bookingMap = new HashMap<String, String>();
             		 
-            		 bookingMap.put("bookingId", booking.getProperty("bookingId").toString());
-            		 bookingMap.put("parkingSpot", booking.getProperty("parkingSpot").toString());
-            		 bookingMap.put("startDate", booking.getProperty("startDate").toString());
-            		 bookingMap.put("endDate", booking.getProperty("endDate").toString());
-            		 bookingMap.put("status", booking.getProperty("status").toString());
-            		             		 
-            		 bookingsList.add(bookingMap);            		             		 
+            		 if(booking.getProperty("user").toString().equals(userName)){
+            		 	bookingMap.put("user", booking.getProperty("user").toString());
+            		 	bookingMap.put("latitude", booking.getProperty("latitude").toString());
+            		 	bookingMap.put("longitude", booking.getProperty("longitude").toString());
+            		 	bookingMap.put("start_date_ms", booking.getProperty("start_date_ms").toString());
+            		 	bookingMap.put("end_date_ms", booking.getProperty("end_date_ms").toString());
+            		 	bookingMap.put("reservation_date_ms", booking.getProperty("reservation_date_ms").toString());
+            		 	bookingMap.put("address", booking.getProperty("address").toString());
+            		 	bookingMap.put("start_date", booking.getProperty("start_date").toString());
+            		 	bookingMap.put("end_date", booking.getProperty("end_date").toString());
+            		 	bookingMap.put("reservation_date", booking.getProperty("reservation_date").toString());
+            		             		             		 
+            		 	bookingsList.add(bookingMap);
+            		 }
             	 }
             }
             
@@ -148,13 +153,11 @@
           <%!
           //A method that handles the query based on the parameters and
           //returns the results of the queray as a list of attributes
-          List<Entity> doQuery(String keyKind, String ParkingSpotName, String QueryKind, String sortByAttribute, String filterProperty, String filterValue){
+          List<Entity> doQuery(String QueryKind, String sortByAttribute){
         	  DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        	  
-        	  Key Key = KeyFactory.createKey(keyKind, ParkingSpotName);
+        	          	 
         	  Query query = new Query(QueryKind);
-        	  
-        	  //query.setFilter(new FilterPredicate(filterProperty, FilterOperator.NOT_EQUAL, filterValue));
+        	          	  
         	  query.addSort(sortByAttribute, Query.SortDirection.DESCENDING);
         	  
         	  List<Entity> attributesList = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(20));        	  
