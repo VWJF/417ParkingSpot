@@ -53,7 +53,7 @@ $(document).ready(function() {
 					}
 					else
 					{
-						alert('Failed. Conflict with booking!'); //Failed to add Booking to datastore. Servlet Error.
+						alert(result.error); //Failed to add Booking to datastore. Servlet Error.
 					}
 
 				},
