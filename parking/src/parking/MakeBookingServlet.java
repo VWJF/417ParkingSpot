@@ -55,6 +55,9 @@ public class MakeBookingServlet extends HttpServlet {
 
 		UserService userService = UserServiceFactory.getUserService();
 		User user = userService.getCurrentUser();
+   		
+		if (user == null) return;
+
 
 		this.current_time = new Date();  //Date current_time = (Date) req.getAttribute("current_time");
 
