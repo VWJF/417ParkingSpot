@@ -12,56 +12,58 @@ $(document).ready(function() {
 	// Submit search form to find spots
 	$("#search_form").submit(function(e){
 		e.preventDefault(e);
-		start_date_hours= create_date($("#start_date").val() + "-" + $("#start_time").val());
-		end_date_hours= create_date($("#end_date").val() + "-" + $("#end_time").val());
-		end_date_hours = end_date_hours - 1;
-		var is_date_valid = check_dates_valid();
 
-		if($('#search_type').val() === 'current_location')
+		if(check_dates_valid())
 		{
-			my_parking_map.find_parking_map_for_current_location(reservation_menu_content_builder);
-		}
-		else
-		{
-			my_parking_map.load_map(-37.397, 155.644);
-			my_parking_map.find_parking_spots_nearby_address($('#address').val(), reservation_menu_content_builder);
+			if($('#search_type').val() === 'current_location')
+			{
+				my_parking_map.find_parking_map_for_current_location(reservation_menu_content_builder);
+			}
+			else
+			{
+				my_parking_map.load_map(-37.397, 155.644);
+				my_parking_map.find_parking_spots_nearby_address($('#address').val(), reservation_menu_content_builder);
+			}
 		}
 	});
 	
 	//Submit Reservation form for spot from infowindow
 	$(document).on('submit','#reservation_form', function(e){
-		 e.preventDefault(e);
-		var url = "/make_booking/";
+		e.preventDefault(e);
+		if(check_dates_valid())
+		{
+			var url = "/make_booking/";
 
-		    $.ajax({
-		    	url: url,
-		    	dataType: 'json',
-		    	type: 'post',
-		    	data: {
-		    		latitude: $('#latitude').val(), 
-		    		longitude: $('#longitude').val(), 
-		    		address_value: $('#address_value').val(),
-		    		end_date_hours: end_date_hours,
-		    		start_date_hours: start_date_hours
-		    	},
-		    success: function (result) {
+			$.ajax({
+				url: url,
+				dataType: 'json',
+				type: 'post',
+				data: {
+					latitude: $('#latitude').val(), 
+					longitude: $('#longitude').val(), 
+					address_value: $('#address_value').val(),
+					end_date_hours: end_date_hours,
+					start_date_hours: start_date_hours
+				},
+				success: function (result) {
 
-		    		if(result.status == true)
-		    	    {
-		    			alert('Successfully added Booking!'); //Successfully added Booking to datastore.
-		    	    }
-		    		else
-		    		{
-		    			alert('Failed. Failure in adding Booking!'); //Failed to add Booking to datastore. Servlet Error.
-		    		}
+					if(result.status == true)
+					{
+						alert('Successfully added Booking!'); //Successfully added Booking to datastore.
+					}
+					else
+					{
+						alert('Failed. Conflict with booking!'); //Failed to add Booking to datastore. Servlet Error.
+					}
 
-		        },
-		    
-		    	error: function(xhr, textStatus, errorThrown){
-		    		alert('request failed');
-		    	}
-		    });	
-		    
+				},
+
+				error: function(xhr, textStatus, errorThrown){
+					alert('request failed');
+				}
+			});	
+		}
+
 	});
 	
 	$('#search_type').change(function(){
@@ -108,8 +110,6 @@ $(document).ready(function() {
 			+ "<input type='hidden' id ='latitude' name='latitude' value='" + parking_spot.latitude + "'>"
 			+ "<input type='hidden' id ='longitude' name='longitude' value='" + parking_spot.longitude + "'>"
 			+ "<input id ='address_value' name='address_value' type='hidden' value='" + parking_spot.address + "'>"
-			+ "<input id ='start_date_hours' name='start_date_hours' type='hidden' value='" + start_date_hours + "'>"
-			+ "<input id ='end_date_hours' name='end_date_hours' type='hidden' value='" + end_date_hours + "'>"
 			+ "</form>"
 			+ "</div>";
 		
@@ -127,9 +127,13 @@ $(document).ready(function() {
 		return digits;
 	}
 	
+	// Build and check if the start and end dates valid
 	function check_dates_valid()
 	{
 		var is_date_valid = true;
+		start_date_hours= create_date($("#start_date").val() + "-" + $("#start_time").val());
+		end_date_hours= create_date($("#end_date").val() + "-" + $("#end_time").val());
+		end_date_hours = end_date_hours - 1;
 		
 		if(start_date_hours >= end_date_hours)
 		{
