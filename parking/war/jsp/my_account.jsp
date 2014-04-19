@@ -63,7 +63,7 @@
       		
       		//QUERY DATA FROM DATASTORE
       		//=====================
-            List<Entity> bookings = doQuery(BookingQueryKind, "start_date", "user", user);             
+            List<Entity> bookings = doQuery(BookingQueryKind, "longitude", "user", user);             
                      
             List<Entity> parkingSpots = doQuery(ParkingSpotQueryKind, "longitude", "owner", user);
             
@@ -85,9 +85,9 @@
             		 bookingMap.put("user", booking.getProperty("user").toString());
             		 bookingMap.put("latitude", booking.getProperty("latitude").toString());
             		 bookingMap.put("longitude", booking.getProperty("longitude").toString());
-            		 bookingMap.put("start_date_ms", booking.getProperty("start_date_ms").toString());
-            		 bookingMap.put("end_date_ms", booking.getProperty("end_date_ms").toString());
-            		 bookingMap.put("reservation_date_ms", booking.getProperty("reservation_date_ms").toString());
+            		 //bookingMap.put("start_date_ms", booking.getProperty("start_date_ms").toString());
+            		 //bookingMap.put("end_date_ms", booking.getProperty("end_date_ms").toString());
+            		 //bookingMap.put("reservation_date_ms", booking.getProperty("reservation_date_ms").toString());
             		 bookingMap.put("address", booking.getProperty("address").toString());
             		 bookingMap.put("start_date", booking.getProperty("start_date").toString());
             		 bookingMap.put("end_date", booking.getProperty("end_date").toString());
