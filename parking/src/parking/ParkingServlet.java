@@ -30,6 +30,10 @@ public class ParkingServlet extends HttpServlet {
 	
 	private HttpServletRequest req;
 	private HttpServletResponse resp;
+	private String address;
+	private int hourly_rate;
+	private double latitude;
+	private double longitude;
 	
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
@@ -39,14 +43,15 @@ public class ParkingServlet extends HttpServlet {
 		UserService userService = UserServiceFactory.getUserService();
 		User user = userService.getCurrentUser();
    		if (user == null) return;
-
+   		
 		
 		String requestType = req.getParameter("request_type");
 		
 		switch(requestType)
 		{
 			case("ALL"):
-				returnAllParkingSpots();
+				hourly_rate = Integer.parseInt(req.getParameter("hourly_rate").toString());
+				returnAllParkingSpots(hourly_rate);
 				break;
 			default:
 				break;
@@ -55,13 +60,15 @@ public class ParkingServlet extends HttpServlet {
 
 	}
 	
-	private void returnAllParkingSpots() throws IOException
+	private void returnAllParkingSpots(int hourlyRate) throws IOException
 	{
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		boolean success = false;
-		Query query = new Query("parkingspot");
+		Query query = new Query("parkingspot").setFilter(new FilterPredicate("hourly_rate",FilterOperator.LESS_THAN_OR_EQUAL, hourlyRate));
+		
 		JSONObject jsonResult = new JSONObject();
 		JSONObject jsonParkingSpots = new JSONObject();
+		
 		try {
 			List<Entity> parkingSpots = datastore.prepare(query).asList(FetchOptions.Builder.withDefaults());
 			int i = 0;

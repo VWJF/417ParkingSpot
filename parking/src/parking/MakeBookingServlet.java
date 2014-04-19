@@ -15,20 +15,14 @@ import javax.servlet.http.HttpServletResponse;
 
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.EmbeddedEntity;
 import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.EntityNotFoundException;
 import com.google.appengine.api.datastore.FetchOptions;
 import com.google.appengine.api.datastore.GeoPt;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
-import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.api.datastore.Query;
-import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
-import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
-import com.google.appengine.api.datastore.Query.SortDirection;
 import com.google.appengine.api.users.User;
 import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
@@ -92,7 +86,7 @@ public class MakeBookingServlet extends HttpServlet {
 			System.out.println("Parent ParkingSpot Not found.");
 			generateJSONResponse(resp, success, "parking spot not found");
 		}
-		else if(checkConflicts(bookingsForSpot, start_date_ms, end_date_ms, coordinate))
+		else if(checkConflicts(bookingsForSpot, start_date_ms, end_date_ms))
 		{
 			System.out.println("Conflict exists!");
 			generateJSONResponse(resp, success, "conflict exists");
@@ -145,7 +139,7 @@ public class MakeBookingServlet extends HttpServlet {
 
 
 	// Get the parking spot for the given coordinates
-	private Entity getParkingSpot(String latitude_str, String longitude_str)
+	public Entity getParkingSpot(String latitude_str, String longitude_str)
 			throws IOException {
 
 		String master_key = latitude_str + "_" + longitude_str;
@@ -164,7 +158,8 @@ public class MakeBookingServlet extends HttpServlet {
 		return parkingSpot;
 	}
 
-	private List<Entity> getAllBookings(FilterPredicate predicate)
+	// Get all bookings with a given predicate
+	public List<Entity> getAllBookings(FilterPredicate predicate)
 	{
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Query query = new Query("Booking").setFilter(predicate);
@@ -172,7 +167,8 @@ public class MakeBookingServlet extends HttpServlet {
 		return Bookings;	
 	}
 
-	private boolean checkConflicts(List<Entity> bookingsForSpot, long start_ms, long end_ms, GeoPt coordinate)
+	// See if any conflicts exist at the given time interval for the given parking spots
+	public boolean checkConflicts(List<Entity> bookingsForSpot, long start_ms, long end_ms)
 	{
 		boolean isConflict = false ;
 

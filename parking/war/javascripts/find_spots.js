@@ -17,12 +17,12 @@ $(document).ready(function() {
 		{
 			if($('#search_type').val() === 'current_location')
 			{
-				my_parking_map.find_parking_map_for_current_location(reservation_menu_content_builder);
+				my_parking_map.find_parking_map_for_current_location(reservation_menu_content_builder, $('#price_range').val());
 			}
 			else
 			{
 				my_parking_map.load_map(-37.397, 155.644);
-				my_parking_map.find_parking_spots_nearby_address($('#address').val(), reservation_menu_content_builder);
+				my_parking_map.find_parking_spots_nearby_address($('#address').val(), reservation_menu_content_builder, $('#price_range').val());
 			}
 		}
 	});
