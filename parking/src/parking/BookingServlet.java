@@ -41,7 +41,15 @@ public class BookingServlet extends HttpServlet {
 
 		UserService userService = UserServiceFactory.getUserService();
 		User user = userService.getCurrentUser();
-		if (user == null) return;
+		boolean success;
+		
+		if (user == null) {
+			//User is not loggedin
+			// do nothing.
+			success = false; //Depending on how .js wants to interpret success = true/false		
+			defaultJSONreply(resp, success);
+			return;
+		}
 
 
 		this.current_time = new Date();  //Date current_time = (Date) req.getAttribute("current_time");
@@ -52,24 +60,13 @@ public class BookingServlet extends HttpServlet {
 			//User does not have Bookings OR User does not have unexpired Bookings
 			// do nothing.
 
-			boolean success = false; //Depending on how .js wants to interpret success = true/false		
-			JSONObject jsonResult = new JSONObject();
-			//JSONObject jsonBooking = new JSONObject();
-			
-			try{
-				//jsonResult.put("bookings", jsonBooking);
-				jsonResult.put("status", success);
-				resp.setContentType("json");
-				resp.getWriter().println(jsonResult);  
-			} catch (JSONException e) {
-				e.printStackTrace();
-			}
+			success = false; //Depending on how .js wants to interpret success = true/false		
+			defaultJSONreply(resp, success);
 			return;
 		}
 
 		jsonPrintBookings(unexpiredBookings);	
-	}
-	
+	}	
 
 	/**
 	 * Get all unexpired Bookings of a User. Will satisfy the condition:
@@ -166,6 +163,26 @@ public class BookingServlet extends HttpServlet {
 			e.printStackTrace();
 		}
 		
+	}
+	
+	/**
+	 * @param resp
+	 * @param success
+	 * @throws IOException
+	 */
+	private void defaultJSONreply(HttpServletResponse resp, boolean success)
+			throws IOException {
+		JSONObject jsonResult = new JSONObject();
+		//JSONObject jsonBooking = new JSONObject();
+		
+		try{
+			//jsonResult.put("bookings", jsonBooking);
+			jsonResult.put("status", success);
+			resp.setContentType("json");
+			resp.getWriter().println(jsonResult);  
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
 	}
 	
 }
