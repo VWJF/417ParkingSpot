@@ -52,9 +52,19 @@ http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
         <servlet-name>make_booking</servlet-name>
         <url-pattern>/make_booking/*</url-pattern>
     </servlet-mapping>
+    
+     <servlet-mapping>
+         <servlet-name>delete_servlet</servlet-name>
+         <url-pattern>/delete_servlet/*</url-pattern>
+     </servlet-mapping>
             
   
 <!-- Java Servlets  -->
+    
+    <servlet>
+        <servlet-name>delete_servlet</servlet-name>
+        <servlet-class>parking.DeleteServlet</servlet-class>
+    </servlet>>
     
     <servlet>
         <servlet-name>register_spot_servlet</servlet-name>

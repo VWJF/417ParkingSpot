@@ -205,6 +205,13 @@
         				  outputString += key.toString() + ": " + attribute.get(key);
         				  outputString += "</li>";
         			  }
+        			  
+        			  //generate delete button
+        			  outputString += "<form action=\"/delete_servlet/\" method=\"post\">";
+        			  outputString += "<input type=\"hidden\" name= \"key\" value=\"345\">";
+        			  outputString += "<input type=\"submit\" name=\"button1\" value=\"Delete\" />";
+        			  outputString += "</form>";
+        			  
         			  outputString += "</ul>";
         			  outputString += "</li>";
         		  }
@@ -215,6 +222,7 @@
           }          
           %>
           
+         
 			
 	<t:page_template>
 
