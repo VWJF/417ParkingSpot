@@ -25,7 +25,9 @@ public class DeleteServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-            	    	
+        
+    	
+    	
     	String test = request.getParameter("button1");
     	
     	System.out.println(test);
