@@ -15,14 +15,21 @@ $(document).ready(function() {
 
 		if(check_dates_valid())
 		{
+			var parking_info = new Object();
+			parking_info.start_date_ms = start_date_hours;
+			parking_info.end_date_ms = end_date_hours;
+			parking_info.max_price = $('#price_range').val();
+			parking_info.reserveMenuBuilder  = reservation_menu_content_builder;
+			parking_info.address = $('#address').val();
+			
 			if($('#search_type').val() === 'current_location')
 			{
-				my_parking_map.find_parking_map_for_current_location(reservation_menu_content_builder, $('#price_range').val());
+				my_parking_map.find_parking_map_for_current_location(parking_info);
 			}
 			else
 			{
 				my_parking_map.load_map(-37.397, 155.644);
-				my_parking_map.find_parking_spots_nearby_address($('#address').val(), reservation_menu_content_builder, $('#price_range').val());
+				my_parking_map.find_parking_spots_nearby_address(parking_info);
 			}
 		}
 	});

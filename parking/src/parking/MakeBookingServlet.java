@@ -40,7 +40,6 @@ public class MakeBookingServlet extends HttpServlet {
 	private DatastoreService datastore;
 	private static final long serialVersionUID = 1L;
 	private Date current_time = new Date(0);
-	private List<Entity> nonConflictSpots;
 
 	@Override
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
@@ -63,6 +62,9 @@ public class MakeBookingServlet extends HttpServlet {
 		String end_date_ms_str =  req.getParameter("end_date_hours");
 		String start_date_ms_str =  req.getParameter("start_date_hours");
 
+		System.out.println("long str" + longitude_str);
+		System.out.println("lat str" + latitude_str);
+
 
 		//Desired format for datastore
 		float longitude = Float.parseFloat(longitude_str);
@@ -77,7 +79,7 @@ public class MakeBookingServlet extends HttpServlet {
 		String booking_key = user +"_" + start_date_ms_str + "_" + end_date_ms_str + longitude_str + latitude_str;
 
 		Entity parentParkingSpot = getParkingSpot(latitude_str, longitude_str); 
-		nonConflictSpots = new ArrayList<Entity>();
+		List<Entity> conflictBookings = new ArrayList<Entity>();
 		boolean success = false;
 		
 		List<Entity> bookingsForSpot = getAllBookings(new FilterPredicate("coordinates",FilterOperator.EQUAL, coordinate));
@@ -86,7 +88,7 @@ public class MakeBookingServlet extends HttpServlet {
 			System.out.println("Parent ParkingSpot Not found.");
 			generateJSONResponse(resp, success, "parking spot not found");
 		}
-		else if(checkConflicts(bookingsForSpot, start_date_ms, end_date_ms))
+		else if(checkConflicts(conflictBookings, bookingsForSpot, start_date_ms, end_date_ms))
 		{
 			System.out.println("Conflict exists!");
 			generateJSONResponse(resp, success, "conflict exists");
@@ -162,13 +164,17 @@ public class MakeBookingServlet extends HttpServlet {
 	public List<Entity> getAllBookings(FilterPredicate predicate)
 	{
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		Query query = new Query("Booking").setFilter(predicate);
+		Query query = new Query("Booking");
+		
+		if(predicate != null)
+			query.setFilter(predicate);
+		
 		List<Entity> Bookings = datastore.prepare(query).asList(FetchOptions.Builder.withDefaults());
 		return Bookings;	
 	}
 
 	// See if any conflicts exist at the given time interval for the given parking spots
-	public boolean checkConflicts(List<Entity> bookingsForSpot, long start_ms, long end_ms)
+	public boolean checkConflicts(List<Entity> conflictBookings, List<Entity> bookingsForSpot, long start_ms, long end_ms)
 	{
 		boolean isConflict = false ;
 
@@ -184,12 +190,9 @@ public class MakeBookingServlet extends HttpServlet {
 			if(start_ms < book_end_ms && end_ms > book_start_ms)
 			{
 				isConflict = true;
-				break;
+				conflictBookings.add(booking);
 			}
-			else
-			{
-				nonConflictSpots.add(booking);
-			}
+
 		}
 
 		return isConflict;
