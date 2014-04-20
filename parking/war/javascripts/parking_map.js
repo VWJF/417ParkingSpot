@@ -64,7 +64,7 @@ function parking_map()
 
 // Creates a map onto to canvas using persons geolocation and load all the parking spot markers
 // Call this by parking_map(your instance).find_parking_map_for_current_location
-parking_map.prototype.find_parking_map_for_current_location = function(registerMenuStringBuilder)
+parking_map.prototype.find_parking_map_for_current_location = function(parking_info)
 {
 	var browserSupportFlag =  new Boolean();
 	var current = this;
@@ -75,7 +75,7 @@ parking_map.prototype.find_parking_map_for_current_location = function(registerM
 
 		navigator.geolocation.getCurrentPosition(function(position) {
 			current.load_map(position.coords.latitude, position.coords.longitude);
-			current.load_parking_spots_onto_map(registerMenuStringBuilder);
+			current.load_parking_spots_onto_map(parking_info.reserveMenuBuilder, parking_info.max_price, parking_info.start_date_ms, parking_info.end_date_ms);
 			
 		}, function() {
 
@@ -104,7 +104,7 @@ parking_map.prototype.find_parking_map_for_current_location = function(registerM
 
 //Load all the markers for the given parking spots with infowindwo containing the contentString built 
 // By the callback functiob contentStringBuilder
-parking_map.prototype.load_parking_spots_onto_map = function(contentStringBuilder)
+parking_map.prototype.load_parking_spots_onto_map = function(contentStringBuilder, hourly_rate_val, start_date_ms_val, end_date_ms_val)
 {
 	var current = this;
 	var url = "/parking_spot_servlet/";
@@ -113,7 +113,7 @@ parking_map.prototype.load_parking_spots_onto_map = function(contentStringBuilde
 		url: url,
 		dataType: 'json',
 		type: 'post',
-		data: { request_type: "ALL"},
+		data: { request_type: "ALL", hourly_rate: hourly_rate_val, start_date_ms: start_date_ms_val, end_date_ms: end_date_ms_val },
 		success: function (result) {
 
 			if(result.status == true)
@@ -194,17 +194,17 @@ parking_map.prototype.add_new_register_marker_by_address = function(address_val)
 }
 
 // Find the parking spots near the given address to reserve
-parking_map.prototype.find_parking_spots_nearby_address = function(address_val, registerMenuStringBuilder) {
+parking_map.prototype.find_parking_spots_nearby_address = function(parking_info) {
 	
 	var current = this;
 	
-	current.selected_address = address_val;
+	current.selected_address = parking_info.address;
 	current.geocoder.geocode( { 'address': current.selected_address}, function(results, status) {
 		
 		if (status == google.maps.GeocoderStatus.OK) {
 			var position_val = results[0].geometry.location;
 			current.map.setCenter(position_val);
-			current.load_parking_spots_onto_map(registerMenuStringBuilder);
+			current.load_parking_spots_onto_map(parking_info.reserveMenuBuilder, parking_info.max_price, parking_info.start_date_ms, parking_info.end_date_ms);
 
 
 		} else {

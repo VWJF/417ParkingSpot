@@ -35,118 +35,136 @@
     
   </head>
   <body>
-  		 <!-- CHECKED LOGGED IN -->
+
+	<!-- RECOMMENDED if your web app will not function without JavaScript enabled -->
+	<noscript>
+		<div
+			style="width: 22em; position: absolute; left: 50%; margin-left: -11em; color: red; background-color: white; border: 1px solid red; padding: 4px; font-family: sans-serif">
+			Your web browser must have JavaScript enabled in order for this
+			application to display correctly.</div>
+	</noscript>
+
+	<!-- CHECKED LOGGED IN -->
 		 <%
 		 	//CONSTANTS
 		 	//=====================		 	
 		 	String BookingQueryKind = "Booking";
 		 	String ParkingSpotQueryKind = "parkingspot";
-		 	
+
 		 	String userName = null;
 		 	User user = null;
-		 	
-		 	
+
 		 	//GET USER NAME
 		 	//=====================
-			UserService userService = UserServiceFactory.getUserService();
-        	user = userService.getCurrentUser();
-        	
-      		// Successful log in then
-       		if (user != null) {
-       			pageContext.setAttribute("userName", user);       			
-       			userName = user.toString();
-       		} 
-        	else {
-        		response.sendRedirect(userService.createLoginURL(request.getRequestURI()));
-       		 }
-      		
-      		
-      		//QUERY DATA FROM DATASTORE
-      		//=====================
-            List<Entity> bookings = doQuery(BookingQueryKind, "longitude", "user", user);             
-                     
-            List<Entity> parkingSpots = doQuery(ParkingSpotQueryKind, "longitude", "owner", user);
-            
-            System.out.println("bookings: " + bookings.size() + ", parkingspots: " + parkingSpots.size());
-            //PROCESS QUERY DATA 
-            //=====================
-            
-            	//BOKINGS
-      			//=====================
-            List<Map<String, String>> bookingsList = new ArrayList<Map<String, String>>();
-                        
-            if (bookings.isEmpty()) {
-            	System.out.println(userName + " has no bookings");
-            	
-            } else {
-            	 for (Entity booking : bookings) {
-            		 Map<String, String> bookingMap = new HashMap<String, String>();
-            		             		 
-            		 bookingMap.put("user", booking.getProperty("user").toString());
-            		 bookingMap.put("latitude", booking.getProperty("latitude").toString());
-            		 bookingMap.put("longitude", booking.getProperty("longitude").toString());
-            		 //bookingMap.put("start_date_ms", booking.getProperty("start_date_ms").toString());
-            		 //bookingMap.put("end_date_ms", booking.getProperty("end_date_ms").toString());
-            		 //bookingMap.put("reservation_date_ms", booking.getProperty("reservation_date_ms").toString());
-            		 bookingMap.put("address", booking.getProperty("address").toString());
-            		 bookingMap.put("start_date", booking.getProperty("start_date").toString());
-            		 bookingMap.put("end_date", booking.getProperty("end_date").toString());
-            		 bookingMap.put("reservation_date", booking.getProperty("reservation_date").toString());
-            		             		             		 
-            		 bookingsList.add(bookingMap);
-            		 
-            	 }
-            }
-            
-				//PARKING SPOTS
-            	//=====================
-            List<Map<String, String>> parkingSpotsList = new ArrayList<Map<String, String>>();
-                        
-            if (parkingSpots.isEmpty()) {
-            	System.out.println(userName + " has no parkingSpots");
-            	
-            } else {
-            	 for (Entity parkingSpot : parkingSpots) {
-            		 Map<String, String> parkingSpotMap = new HashMap<String, String>();
-            		            		 
-            		 parkingSpotMap.put("owner", parkingSpot.getProperty("owner").toString());
-            		 parkingSpotMap.put("address", parkingSpot.getProperty("address").toString());
-            		 parkingSpotMap.put("longitude", parkingSpot.getProperty("longitude").toString());
-            		 parkingSpotMap.put("latitude", parkingSpot.getProperty("latitude").toString());
-            		 parkingSpotMap.put("hourly_rate", parkingSpot.getProperty("hourly_rate").toString());
-            		            		 
-            		 parkingSpotsList.add(parkingSpotMap);
-            		 
-            	 }
-            }
-            
-            
-            //GENERATE HTML OUTPUT
-            //=====================
-            String outputString = "";
-            
-            outputString += "<h3> Bookings </h3> ";
-            if(generateHTMLOutput(bookingsList) != null)            	
-            	outputString += generateHTMLOutput(bookingsList);            
-            else
-            	outputString += "<p>" + userName + " has no bookings </p> ";
-            
-            outputString += " <br> ";
-            
-            outputString += "<h3> Parking Spots </h3> ";
-            if(generateHTMLOutput(parkingSpotsList) != null)
-            	outputString += generateHTMLOutput(parkingSpotsList);
-            else
-            	outputString += "<p>" + userName + " has no parking Spots</p> ";
-            
-            pageContext.setAttribute("outputString", outputString);	
-            	
-            //test
-            System.out.println("outputString: " + outputString);
-          
-          	
-          	
-          %>
+		 	UserService userService = UserServiceFactory.getUserService();
+		 	user = userService.getCurrentUser();
+
+		 	// Successful log in then
+		 	if (user != null) {
+		 		pageContext.setAttribute("userName", user);
+		 		userName = user.toString();
+		 	} else {
+		 		response.sendRedirect(userService.createLoginURL(request
+		 				.getRequestURI()));
+		 	}
+
+		 	//QUERY DATA FROM DATASTORE
+		 	//=====================
+		 	List<Entity> bookings = doQuery(BookingQueryKind, "longitude",
+		 			"user", user);
+
+		 	List<Entity> parkingSpots = doQuery(ParkingSpotQueryKind,
+		 			"longitude", "owner", user);
+
+		 	System.out.println("bookings: " + bookings.size()
+		 			+ ", parkingspots: " + parkingSpots.size());
+		 	//PROCESS QUERY DATA 
+		 	//=====================
+
+		 	//BOKINGS
+		 	//=====================
+		 	List<Map<String, String>> bookingsList = new ArrayList<Map<String, String>>();
+
+		 	if (bookings.isEmpty()) {
+		 		System.out.println(userName + " has no bookings");
+
+		 	} else {
+		 		for (Entity booking : bookings) {
+		 			Map<String, String> bookingMap = new HashMap<String, String>();
+
+		 			bookingMap.put("user", booking.getProperty("user")
+		 					.toString());
+		 			bookingMap.put("latitude", booking.getProperty("latitude")
+		 					.toString());
+		 			bookingMap.put("longitude", booking
+		 					.getProperty("longitude").toString());
+		 			//bookingMap.put("start_date_ms", booking.getProperty("start_date_ms").toString());
+		 			//bookingMap.put("end_date_ms", booking.getProperty("end_date_ms").toString());
+		 			//bookingMap.put("reservation_date_ms", booking.getProperty("reservation_date_ms").toString());
+		 			bookingMap.put("address", booking.getProperty("address")
+		 					.toString());
+		 			bookingMap.put("start_date",
+		 					booking.getProperty("start_date").toString());
+		 			bookingMap.put("end_date", booking.getProperty("end_date")
+		 					.toString());
+		 			bookingMap.put("reservation_date",
+		 					booking.getProperty("reservation_date").toString());
+
+		 			bookingsList.add(bookingMap);
+
+		 		}
+		 	}
+
+		 	//PARKING SPOTS
+		 	//=====================
+		 	List<Map<String, String>> parkingSpotsList = new ArrayList<Map<String, String>>();
+
+		 	if (parkingSpots.isEmpty()) {
+		 		System.out.println(userName + " has no parkingSpots");
+
+		 	} else {
+		 		for (Entity parkingSpot : parkingSpots) {
+		 			Map<String, String> parkingSpotMap = new HashMap<String, String>();
+
+		 			parkingSpotMap.put("owner", parkingSpot
+		 					.getProperty("owner").toString());
+		 			parkingSpotMap.put("address",
+		 					parkingSpot.getProperty("address").toString());
+		 			parkingSpotMap.put("longitude",
+		 					parkingSpot.getProperty("longitude").toString());
+		 			parkingSpotMap.put("latitude",
+		 					parkingSpot.getProperty("latitude").toString());
+		 			parkingSpotMap.put("hourly_rate",
+		 					parkingSpot.getProperty("hourly_rate").toString());
+
+		 			parkingSpotsList.add(parkingSpotMap);
+
+		 		}
+		 	}
+
+		 	//GENERATE HTML OUTPUT
+		 	//=====================
+		 	String outputString = "";
+
+		 	outputString += "<h3> Bookings </h3> ";
+		 	if (generateHTMLOutput(bookingsList) != null)
+		 		outputString += generateHTMLOutput(bookingsList);
+		 	else
+		 		outputString += "<p>" + userName + " has no bookings </p> ";
+
+		 	outputString += " <br> ";
+
+		 	outputString += "<h3> Parking Spots </h3> ";
+		 	if (generateHTMLOutput(parkingSpotsList) != null)
+		 		outputString += generateHTMLOutput(parkingSpotsList);
+		 	else
+		 		outputString += "<p>" + userName + " has no parking Spots</p> ";
+
+		 	pageContext.setAttribute("outputString", outputString);
+
+		 	//test
+		 	System.out.println("outputString: " + outputString);
+		 %>
                              
           
           <%!
