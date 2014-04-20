@@ -77,12 +77,13 @@ public class MakeBookingServlet extends HttpServlet {
 
 		//Create a new Booking entity.
 		String booking_key = user +"_" + start_date_ms_str + "_" + end_date_ms_str + longitude_str + latitude_str;
+		System.out.println("MakeBooking\nKind: Booking  Name: "+booking_key);
 
 		Entity parentParkingSpot = getParkingSpot(latitude_str, longitude_str); 
 		List<Entity> conflictBookings = new ArrayList<Entity>();
 		boolean success = false;
 		
-		List<Entity> bookingsForSpot = getAllBookings(new FilterPredicate("coordinates",FilterOperator.EQUAL, coordinate));
+		List<Entity> bookingsForSpot = getAllBookings(new FilterPredicate("coordinates",FilterOperator.EQUAL, coordinate), parentParkingSpot);
 
 		if(parentParkingSpot == null ){
 			System.out.println("Parent ParkingSpot Not found.");
@@ -95,13 +96,12 @@ public class MakeBookingServlet extends HttpServlet {
 		}
 		else
 		{
+			//Entity booking = new Entity("Booking", ancestor_path); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
+			Entity booking = new Entity("Booking", booking_key, parentParkingSpot.getKey() ); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
 			
-			Key ancestor_path = new KeyFactory.Builder(parentParkingSpot.getKey())
-			.addChild("Booking", booking_key)
-			.getKey();
-
-			Entity booking = new Entity("Booking", ancestor_path); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
-
+			System.out.println("Booking Key: "+booking.getKey());
+			System.out.println("Booking Key String: "+KeyFactory.keyToString(booking.getKey()));
+			
 			booking.setProperty("user", user);
 			booking.setProperty("latitude", latitude);
 			booking.setProperty("longitude", longitude);
@@ -113,7 +113,7 @@ public class MakeBookingServlet extends HttpServlet {
 			booking.setProperty("end_date", end);
 			booking.setProperty("reservation_date", current_time);
 			booking.setProperty("coordinates", coordinate);
-			datastore.put(booking);	
+			datastore.put(booking);
 			success = true;
 			generateJSONResponse(resp, success, "it was successful, no error");
 		}
@@ -156,15 +156,22 @@ public class MakeBookingServlet extends HttpServlet {
 		if(parkingSpotQuery.size() == 1){
 			parkingSpot = parkingSpotQuery.get(0);
 		}
-
+		
+		if( parkingSpot != null){
+			System.out.println("Ancestor PakringSpot Key: "+parkingSpot.getKey());
+			System.out.println("Ancestor PakringSpot KeyString: "+KeyFactory.keyToString(parkingSpot.getKey()));
+		}
+		
 		return parkingSpot;
 	}
 
 	// Get all bookings with a given predicate
-	public List<Entity> getAllBookings(FilterPredicate predicate)
+	public List<Entity> getAllBookings(FilterPredicate predicate, Entity ancestor)
 	{
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		Query query = new Query("Booking");
+		if(ancestor != null)
+			query.setAncestor(ancestor.getKey());
 		
 		if(predicate != null)
 			query.setFilter(predicate);

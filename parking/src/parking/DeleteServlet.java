@@ -34,14 +34,16 @@ public class DeleteServlet extends HttpServlet {
     	String kind = parts[0]; 
     	String name = parts[1]; 
     	
-    	System.out.println("kind: " + kind + "  name: " + name);
+    	System.out.println("DeleteBooking\nKind: " + kind + "  Name: " + name);
     	
     	if(kind.equals("Booking")){
     		Key key = KeyFactory.createKey(kind, name);
+        	System.out.println("Booking Key: "+ key);
+        	System.out.println("Booking Key (String): "+ KeyFactory.keyToString(key));
         	
         	Query query = new Query(kind, key);
-        	List<Entity> parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
-        	System.out.println("Query size!!!: " + parkingSpot.size());
+        	List<Entity> aUserBooking = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
+        	System.out.println("Query size!!!: " + aUserBooking.size());
     	}
     	else if(kind.equals("parkingspot")){
     		Key key = KeyFactory.createKey(kind, name);
