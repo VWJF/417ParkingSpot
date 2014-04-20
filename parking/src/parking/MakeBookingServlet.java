@@ -121,7 +121,7 @@ public class MakeBookingServlet extends HttpServlet {
 
 		Key datatore_booking_key = null;
 
-		if( isNonConflictBooking(parentParkingSpot.getKey(), user, latitude, longitude, start_date_ms, end_date_ms ) ){
+		if( isNonConflictBooking(parentParkingSpot.getKey(), booking, user, latitude, longitude, start_date_ms, end_date_ms ) ){
 			datatore_booking_key = datastore.put(booking);
 			success = true;
 		}
@@ -148,7 +148,8 @@ public class MakeBookingServlet extends HttpServlet {
 		}
 
 		System.out.println("doPost(): Booking complete. Respond with status = ("+success+").");
-
+		System.out.println();
+		
 		generateJSONResponse(resp, success);
 
 	}
@@ -219,30 +220,33 @@ public class MakeBookingServlet extends HttpServlet {
 	/**
 	 * Helper method that queries the Datastore for Booking entities and compares the results with the 
 	 * provided Booking entity parameters provided. 
-	 * Finds NON-conflicts.
+	 * Finds (NON)conflicts.
+	 * return 'false' if new booking detected a conflict, 'true' otherwise.
 	 * Uses Booking attributes start_time, end_time and ParkingSpot(latitude, longitude) to determine conflicts.
-	 * Return false if a the new booking WILL cause conflict with existing Booking. 
-	 * Returns true if a the new booking WILL NOT cause conflict with existing Booking.
-	 * @param booking_key
+	 * // interpretation of false if a the new booking WILL cause conflict with existing Booking. 
+	 * // interpretation of true if a the new booking WILL NOT cause conflict with existing Booking.
+	 * @param new_booking
 	 * @param booking_user
 	 * @param booking_lat
 	 * @param booking_lng
 	 * @param booking_start_time
 	 * @param booking_end_time
-	 * @return
+	 * @param booking_key
+	 * @return 
 	 * @throws IOException
 	 * @throws IllegalArgumentException
 	 */
-	private boolean isNonConflictBooking(Key parent_key, User booking_user, float booking_lat, float booking_lng, long booking_start_time, long booking_end_time )
+	private boolean isNonConflictBooking(Key parent_key, Entity new_booking, User booking_user, float booking_lat, float booking_lng, long booking_start_time, long booking_end_time )
 			throws IOException {
 
+		if(new_booking == null) return false;
+		
 		Date book_start = new Date(booking_start_time); Date book_end = new Date(booking_end_time); //In case implementation changes to use Date Object.
 
 		System.out.println("    Starting isConflictFreeBooking()");
 
 		System.out.println("    Booking(" + booking_user + ", ParkingSpot:(" + booking_lat + ", " + booking_lng+"), "
 				+booking_start_time+", "+booking_end_time+", "+current_time +")");
-		System.out.println("    parent.getKey(): "+ KeyFactory.keyToString(parent_key));
 		System.out.println("    parkingSpot.getKey(): "+ KeyFactory.keyToString(parent_key));
 
 		// If the Parent ParkingSpot does not exist, there is no use in trying to make a Booking.
@@ -264,64 +268,119 @@ public class MakeBookingServlet extends HttpServlet {
 		// are GREATER_THAT_OR_EQUAL to the value of booking_start_time
 
 		/////Find elements that lie outside [d1, d2] inclusive
-		// Equation: @d2 < start_time OR end_time < @d1.
+		// Equation: start_time < @d2 AND @d1 < end_time.
+		// Query 1: start_time < @d2
+		// QUery 2: @d1 < end_time
 		// Query+Filter will return all entities satisfying the condition.
 		// Obtaining a result from the query means that the proposed 
-		// Booking(d1, d2) lies outside [datastore.start, datastore.end] and 
-		// does NOT cause a conflict
-		// Looking for results of each query to be non-empty (isEmpty() == false)
+		// Booking(d1, d2) overlaps with [datastore.start, datastore.end] and 
+		// does cause a conflict.
+		// Assumption: Query 1: datastore.start_time property in ASCENDING order.
+		// For comparing datastore.start_date_ms < booking_end_time
+		// Assumption: Query 2: datastore.end_time property in DESCENDING order
+		// For comparing datastore.end_date_ms > booking_start_time
+
+		//Looking for results of each query to be the same entry.
 
 		/////
-		// Query 1: start_time > @d2.
-		///// Find entities such that datastore.start_date_ms > booking_end_time (start_time > @d2)
-		Filter BookingEndBelowDatastartFilter =
+		// Query 1: start_time < @d2.
+		///// Find entities such that datastore.start_date_ms < booking_end_time (start_time < @d2)
+		Filter filter_1 =
 				new FilterPredicate("start_date_ms",
-						FilterOperator.GREATER_THAN,
+						FilterOperator.LESS_THAN,
 						booking_end_time);
 
 		/////
-		// Query 2: end_time < @d1.
-		///// Find entities such that datastore.end_date_ms < booking_start_time (end_time < @d1)
-		Filter BookingStartAboveDataendFilter =
+		// Query 2: end_time > @d1.
+		///// Find entities such that datastore.end_date_ms > booking_start_time (end_time > @d1)
+		Filter filter_2 =
 				new FilterPredicate("end_date_ms",
-						FilterOperator.LESS_THAN,
+						FilterOperator.GREATER_THAN,
 						booking_start_time);
 
 
 		Query ancestor_query = new Query("Booking").setAncestor(parent_key);
 		//Query 1:
-		Query q_booking_before = new Query("Booking").setAncestor(parent_key)
-				.addSort("start_date_ms", SortDirection.DESCENDING)
-				.setFilter(BookingEndBelowDatastartFilter);
+		Query query_1 = new Query("Booking").setAncestor(parent_key)
+				.addSort("start_date_ms", SortDirection.ASCENDING)
+				.setFilter(filter_1);
 		//Query 2:
-		Query q_booking_after = new Query("Booking").setAncestor(parent_key)
+		Query query_2 = new Query("Booking").setAncestor(parent_key)
 				.addSort("end_date_ms", SortDirection.DESCENDING)
-				.setFilter(BookingStartAboveDataendFilter);
+				.setFilter(filter_2);
 		
 
-		PreparedQuery pq_before = datastore.prepare(q_booking_before);
-		List<Entity> result_before = pq_before.asList(FetchOptions.Builder.withLimit(10));
-		PreparedQuery pq_after = datastore.prepare(q_booking_after);
-		List<Entity> result_after = pq_after.asList(FetchOptions.Builder.withLimit(10));
+		PreparedQuery pq_1 = datastore.prepare(query_1);
+		List<Entity> results_q1 = pq_1.asList(FetchOptions.Builder.withLimit(1));
+		PreparedQuery pq_2 = datastore.prepare(query_2);
+		List<Entity> result_q2 = pq_2.asList(FetchOptions.Builder.withLimit(1));
 
-		System.out.println("    New Booking.end--then--Existing Booking.start: "
-				+result_before.isEmpty());
-		if( !result_before.isEmpty())
-			System.out.println("    Existing conflict Bookings in datastore New Booking--then--existing Booking: "
-					+"#found "+ result_before.size()+" with key "+KeyFactory.keyToString(result_before.get(0).getKey()));
-		System.out.println("    Existing Booking.end--then--New Booking.start: "
-				+result_after.isEmpty());
-		if( !result_after.isEmpty()) 
-			System.out.println("    Existing conflict Bookings in datastore Existing Booking--then--New Booking: "
-					+"#found "+ result_after.size()+" with key "+KeyFactory.keyToString(result_after.get(0).getKey()));
+		Entity conflict_before_newBooking = null, conflict_after_newBooking = null; 
 		
-		//Want to return (result_start_before.isEmpty() NAND result_end_after.isEmpty())
-		// Constructed using ! (a & b). Used & to avoid short-circuiting.
-		System.out.println("    isConflictFreeBooking() response (proceed with booking): "+ !(result_before.isEmpty() & result_after.isEmpty()));
-		return !( result_before.isEmpty() & result_after.isEmpty()); 
+		System.out.println("    Existing Booking.start--then--New Booking.end: "
+								+results_q1.isEmpty());
+		if( !results_q1.isEmpty()){
+			conflict_before_newBooking = results_q1.get(0);
+			System.out.println("    Conflict in datastore Existing Booking.start--then--New Booking.end: "
+						+"\n#found "+ results_q1.size() +" with key " + KeyFactory.keyToString( conflict_before_newBooking.getKey() ));
+			System.out.println("    start_date: " + conflict_before_newBooking.getProperty("start_date")
+							+"\n    end_date: " + conflict_before_newBooking.getProperty("end_date"));
+		}
+		
+		System.out.println("    New Booking.start--then--Existing Booking.end: "
+								+result_q2.isEmpty());
+		if( !result_q2.isEmpty()) {
+			conflict_after_newBooking = result_q2.get(0);
+			System.out.println("    Conflict Bookings in datastore New Booking.start--then--Existing Booking.end: "
+						+"\n#found "+ result_q2.size() +" with key " + KeyFactory.keyToString( conflict_after_newBooking.getKey() ));
+			System.out.println("    start_date: " + conflict_after_newBooking.getProperty("start_date")
+							+"\n    end_date: " + conflict_after_newBooking.getProperty("end_date"));
+		}
+		
+		// Now we have the two relevant bookings that may cause 
+		// overlap before(conflict_before_newBooking) and after(conflict_after_newBooking) the new_booking.
+		boolean conflictDetected = false;
+		
+		if( conflict_before_newBooking != null ){
+			System.out.println("    isOverlapRange() detected: with datastore.start_time < newbooking: "
+								+ isOverlapRange(book_start, book_end, conflict_before_newBooking));
+			conflictDetected = isOverlapRange(book_start, book_end, conflict_before_newBooking);
+		}
+		if( conflict_after_newBooking != null ){
+			System.out.println("    isOverlapRange() detected: with newbooking.start < datastore.end: "
+						+ isOverlapRange(book_start, book_end, conflict_before_newBooking));
+			conflictDetected = conflictDetected && isOverlapRange(book_start, book_end, conflict_after_newBooking);
+		}
+		
+		System.out.println("    isConflictFreeBooking() response (conflict found): "+ conflictDetected);
+		
+		return ! conflictDetected; //Return 'false' if new booking detected a conflict, 'true' otherwise.
+		
 	}
 
-
+	/**
+	 * Returns true if (start_date, end_date) of e1 and e2 overlap.
+	 * @param book_start TODO
+	 * @param book_end TODO
+	 * @param e2
+	 * @return
+	 */
+	private boolean isOverlapRange(Date book_start, Date book_end, Entity e2){
+		// Overlap occurs when start1 <= end2 and start2 <= end1 == true.
+		// For exclusive end_date use '<' instead of '<='.
+		
+		//Date start1 = (Date) e1.getProperty("start_date"); 
+		//Date end1 = (Date) e1.getProperty("end_date");
+		Date start1 = book_start;
+		Date end1 = book_end;
+		Date start2 = (Date) e2.getProperty("start_date");
+		Date end2 = (Date) e2.getProperty("end_date");
+		System.out.println("Trying overlap.");
+		if( start1.before(end2) && start2.before(end1)) 
+			return true;
+		return false;
+	}
+	
 	/**
 	 * Helper method that queries the Datastore for Booking entities and compares the results with the 
 	 * provided Booking entity parameters provided. 
