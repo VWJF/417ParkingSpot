@@ -16,6 +16,7 @@ import com.google.appengine.labs.repackaged.org.json.JSONObject;
 import java.io.IOException;
 import java.util.List;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,19 +34,34 @@ public class DeleteServlet extends HttpServlet {
     	String kind = parts[0]; 
     	String name = parts[1]; 
     	
-    	Key key = KeyFactory.createKey(kind, name);
+    	System.out.println("kind: " + kind + "  name: " + name);
     	
-    	datastore.delete(key);    	
+    	if(kind.equals("Booking")){
+    		Key key = KeyFactory.createKey(kind, name);
+        	
+        	Query query = new Query(kind, key);
+        	List<Entity> parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
+        	System.out.println("Query size!!!: " + parkingSpot.size());
+    	}
+    	else if(kind.equals("parkingspot")){
+    		Key key = KeyFactory.createKey(kind, name);
+        	
+        	Query query = new Query(kind, key);
+        	List<Entity> parkingSpot = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
+        	System.out.println("Query size!!!: " + parkingSpot.size());
+        	datastore.delete(parkingSpot.get(0).getKey());  
+    	}
     	
-    	String test = request.getParameter("button1");
     	
-    	System.out.println(test);
     	
-    	String test2 = request.getParameter("key");
     	
-    	System.out.println(test2);
 
-        //request.getRequestDispatcher("/WEB-INF/some-result.jsp").forward(request, response);
+        try {
+        	response.sendRedirect("/my_account/");
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     	
     }
 
