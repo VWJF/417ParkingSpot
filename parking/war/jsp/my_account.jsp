@@ -38,19 +38,18 @@
   		 <!-- CHECKED LOGGED IN -->
 		 <%
 		 	//CONSTANTS
-		 	//=====================
-		 	String ParkingSpotName = "ParkingSpotApp";
-		 	String BookingQueryKind = "BookingsQuery";
+		 	//=====================		 	
+		 	String BookingQueryKind = "Booking";
 		 	String ParkingSpotQueryKind = "parkingspot";
-		 	String BookingKeyKind = "Booking";
-		 	String ParkingSpotKeyKind = "parkingspot";
-		 	String userName = null;		 
+		 	
+		 	String userName = null;
+		 	User user = null;
 		 	
 		 	
 		 	//GET USER NAME
 		 	//=====================
 			UserService userService = UserServiceFactory.getUserService();
-        	User user = userService.getCurrentUser();
+        	user = userService.getCurrentUser();
         	
       		// Successful log in then
        		if (user != null) {
@@ -64,9 +63,9 @@
       		
       		//QUERY DATA FROM DATASTORE
       		//=====================
-            List<Entity> bookings = doQuery(BookingKeyKind, ParkingSpotName, BookingQueryKind, "startDate", "username", userName);             
+            List<Entity> bookings = doQuery(BookingQueryKind, "longitude", "user", user);             
                      
-            List<Entity> parkingSpots = doQuery(ParkingSpotKeyKind, ParkingSpotName, ParkingSpotQueryKind, "owner", "owner", userName);
+            List<Entity> parkingSpots = doQuery(ParkingSpotQueryKind, "longitude", "owner", user);
             
             System.out.println("bookings: " + bookings.size() + ", parkingspots: " + parkingSpots.size());
             //PROCESS QUERY DATA 
@@ -82,14 +81,20 @@
             } else {
             	 for (Entity booking : bookings) {
             		 Map<String, String> bookingMap = new HashMap<String, String>();
-            		 
-            		 bookingMap.put("bookingId", booking.getProperty("bookingId").toString());
-            		 bookingMap.put("parkingSpot", booking.getProperty("parkingSpot").toString());
-            		 bookingMap.put("startDate", booking.getProperty("startDate").toString());
-            		 bookingMap.put("endDate", booking.getProperty("endDate").toString());
-            		 bookingMap.put("status", booking.getProperty("status").toString());
             		             		 
-            		 bookingsList.add(bookingMap);            		             		 
+            		 bookingMap.put("user", booking.getProperty("user").toString());
+            		 bookingMap.put("latitude", booking.getProperty("latitude").toString());
+            		 bookingMap.put("longitude", booking.getProperty("longitude").toString());
+            		 //bookingMap.put("start_date_ms", booking.getProperty("start_date_ms").toString());
+            		 //bookingMap.put("end_date_ms", booking.getProperty("end_date_ms").toString());
+            		 //bookingMap.put("reservation_date_ms", booking.getProperty("reservation_date_ms").toString());
+            		 bookingMap.put("address", booking.getProperty("address").toString());
+            		 bookingMap.put("start_date", booking.getProperty("start_date").toString());
+            		 bookingMap.put("end_date", booking.getProperty("end_date").toString());
+            		 bookingMap.put("reservation_date", booking.getProperty("reservation_date").toString());
+            		             		             		 
+            		 bookingsList.add(bookingMap);
+            		 
             	 }
             }
             
@@ -103,16 +108,15 @@
             } else {
             	 for (Entity parkingSpot : parkingSpots) {
             		 Map<String, String> parkingSpotMap = new HashMap<String, String>();
-            		 
-            		 if(parkingSpot.getProperty("owner").toString().equals(userName)){
-            		 	parkingSpotMap.put("owner", parkingSpot.getProperty("owner").toString());
-            		 	parkingSpotMap.put("address", parkingSpot.getProperty("address").toString());
-            		 	parkingSpotMap.put("longitude", parkingSpot.getProperty("longitude").toString());
-            		 	parkingSpotMap.put("latitude", parkingSpot.getProperty("latitude").toString());
-            		 	parkingSpotMap.put("hourly_rate", parkingSpot.getProperty("hourly_rate").toString());
             		            		 
-            		 	parkingSpotsList.add(parkingSpotMap);
-            		 }
+            		 parkingSpotMap.put("owner", parkingSpot.getProperty("owner").toString());
+            		 parkingSpotMap.put("address", parkingSpot.getProperty("address").toString());
+            		 parkingSpotMap.put("longitude", parkingSpot.getProperty("longitude").toString());
+            		 parkingSpotMap.put("latitude", parkingSpot.getProperty("latitude").toString());
+            		 parkingSpotMap.put("hourly_rate", parkingSpot.getProperty("hourly_rate").toString());
+            		            		 
+            		 parkingSpotsList.add(parkingSpotMap);
+            		 
             	 }
             }
             
@@ -148,13 +152,13 @@
           <%!
           //A method that handles the query based on the parameters and
           //returns the results of the queray as a list of attributes
-          List<Entity> doQuery(String keyKind, String ParkingSpotName, String QueryKind, String sortByAttribute, String filterProperty, String filterValue){
+          List<Entity> doQuery(String QueryKind, String sortByAttribute, String filterAttribute, User filterValue){
         	  DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-        	  
-        	  Key Key = KeyFactory.createKey(keyKind, ParkingSpotName);
+        	          	 
         	  Query query = new Query(QueryKind);
         	  
-        	  //query.setFilter(new FilterPredicate(filterProperty, FilterOperator.NOT_EQUAL, filterValue));
+        	  query = query.setFilter(new FilterPredicate(filterAttribute, FilterOperator.EQUAL, filterValue));
+        	          	  
         	  query.addSort(sortByAttribute, Query.SortDirection.DESCENDING);
         	  
         	  List<Entity> attributesList = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(20));        	  
