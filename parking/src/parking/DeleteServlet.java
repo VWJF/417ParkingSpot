@@ -25,8 +25,17 @@ public class DeleteServlet extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        
+    	DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
     	
+    	String key_str = request.getParameter("key");
+    	
+    	String[] parts = key_str.split(" ");
+    	String kind = parts[0]; 
+    	String name = parts[1]; 
+    	
+    	Key key = KeyFactory.createKey(kind, name);
+    	
+    	datastore.delete(key);    	
     	
     	String test = request.getParameter("button1");
     	
