@@ -15,7 +15,7 @@ parking/war/WEB-INF/deploy/
 parking/war/WEB-INF/classes/
 
 # App engine generated #
-parking/war/WEB-INF/appengine-generated/
+parking/war/WEB-INF/appengine-generated/local_db.bin
 
 ##>>
 
