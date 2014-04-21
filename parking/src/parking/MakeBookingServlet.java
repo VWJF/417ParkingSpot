@@ -76,7 +76,11 @@ public class MakeBookingServlet extends HttpServlet {
 		Date end = new Date(end_date_ms);
 
 		//Create a new Booking entity.
+		//FIXME: typo .....longitudelatitude
 		String booking_key = user +"_" + start_date_ms_str + "_" + end_date_ms_str + longitude_str + latitude_str;
+		//FIXME: Without typo in ....latitute_longitude:
+		//String booking_key = user +"_" + start_date_ms_str + "_" + end_date_ms_str + latitude_str + "_" + longitude_str;
+		
 		System.out.println("MakeBooking\nKind: Booking  Name: "+booking_key);
 
 		Entity parentParkingSpot = getParkingSpot(latitude_str, longitude_str); 
@@ -96,7 +100,7 @@ public class MakeBookingServlet extends HttpServlet {
 		}
 		else
 		{
-			//Entity booking = new Entity("Booking", ancestor_path); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
+			//Entity booking = new Entity("Booking", booking_key); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
 			Entity booking = new Entity("Booking", booking_key, parentParkingSpot.getKey() ); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
 			
 			System.out.println("Booking Key: "+booking.getKey());
@@ -158,8 +162,8 @@ public class MakeBookingServlet extends HttpServlet {
 		}
 		
 		if( parkingSpot != null){
-			System.out.println("Ancestor PakringSpot Key: "+parkingSpot.getKey());
-			System.out.println("Ancestor PakringSpot KeyString: "+KeyFactory.keyToString(parkingSpot.getKey()));
+			System.out.println("Ancestor ParkingSpot Key: "+parkingSpot.getKey());
+			System.out.println("Ancestor ParkingSpot KeyString: "+KeyFactory.keyToString(parkingSpot.getKey()));
 		}
 		
 		return parkingSpot;
