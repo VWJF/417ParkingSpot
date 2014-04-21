@@ -1,43 +1,16 @@
-<!-- Indices written at Sat, 19 Apr 2014 16:29:15 PDT -->
+<!-- Indices written at Sun, 20 Apr 2014 16:44:09 PDT -->
 
 <datastore-indexes>
 
-     <datastore-index kind="Booking" ancestor="false" source="manual">
+    <!-- Used 4 times in query history -->
+    <datastore-index kind="Booking" ancestor="false" source="auto">
         <property name="user" direction="asc"/>
         <property name="longitude" direction="desc"/>
     </datastore-index>
-    
-    <!-- Used 2 times in query history -->
-    <datastore-index kind="Booking" ancestor="true" source="auto">
-        <property name="start_date_ms" direction="desc"/>
-    </datastore-index>
 
-    <!-- Used 2 times in query history -->
-    <datastore-index kind="Booking" ancestor="true" source="auto">
-        <property name="end_date_ms" direction="desc"/>
-    </datastore-index>
-
-    <!-- Used 26 times in query history -->
-    <datastore-index kind="Booking" ancestor="false" source="auto">
-        <property name="user" direction="asc"/>
-        <property name="start_date" direction="desc"/>
-    </datastore-index>
-
-    <!-- Used 32 times in query history -->
+    <!-- Used 4 times in query history -->
     <datastore-index kind="parkingspot" ancestor="false" source="auto">
         <property name="owner" direction="asc"/>
-        <property name="longitude" direction="desc"/>
-    </datastore-index>
-
-    <!-- Used 5 times in query history -->
-    <datastore-index kind="Booking" ancestor="false" source="auto">
-        <property name="user" direction="asc"/>
-        <property name="address" direction="desc"/>
-    </datastore-index>
-
-    <!-- Used 2 times in query history -->
-    <datastore-index kind="Booking" ancestor="false" source="auto">
-        <property name="user" direction="asc"/>
         <property name="longitude" direction="desc"/>
     </datastore-index>
 

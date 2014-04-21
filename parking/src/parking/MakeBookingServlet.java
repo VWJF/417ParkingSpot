@@ -75,9 +75,6 @@ public class MakeBookingServlet extends HttpServlet {
 		Date start = new Date(start_date_ms);
 		Date end = new Date(end_date_ms);
 
-		//Create a new Booking entity.
-		String booking_key = user +"_" + start_date_ms_str + "_" + end_date_ms_str + longitude_str + latitude_str;
-
 		Entity parentParkingSpot = getParkingSpot(latitude_str, longitude_str); 
 		List<Entity> conflictBookings = new ArrayList<Entity>();
 		boolean success = false;
@@ -95,12 +92,12 @@ public class MakeBookingServlet extends HttpServlet {
 		}
 		else
 		{
-			
+			String booking_key = user +"_" + start_date_ms_str + "_" + end_date_ms_str +  "_" + longitude_str + "_" + latitude_str;
 			Key ancestor_path = new KeyFactory.Builder(parentParkingSpot.getKey())
 			.addChild("Booking", booking_key)
 			.getKey();
 
-			Entity booking = new Entity("Booking", ancestor_path); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
+			Entity booking = new Entity("Booking", booking_key); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
 
 			booking.setProperty("user", user);
 			booking.setProperty("latitude", latitude);
@@ -113,6 +110,7 @@ public class MakeBookingServlet extends HttpServlet {
 			booking.setProperty("end_date", end);
 			booking.setProperty("reservation_date", current_time);
 			booking.setProperty("coordinates", coordinate);
+			booking.setProperty("parking_spot", ancestor_path);
 			datastore.put(booking);	
 			success = true;
 			generateJSONResponse(resp, success, "it was successful, no error");
