@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!-- Indices written at Sun, 20 Apr 2014 13:29:06 PDT -->
 
 <datastore-indexes>
@@ -14,4 +15,22 @@
         <property name="longitude" direction="desc"/>
     </datastore-index>
 
+=======
+<!-- Indices written at Sun, 20 Apr 2014 16:44:09 PDT -->
+
+<datastore-indexes>
+
+    <!-- Used 4 times in query history -->
+    <datastore-index kind="Booking" ancestor="false" source="auto">
+        <property name="user" direction="asc"/>
+        <property name="longitude" direction="desc"/>
+    </datastore-index>
+
+    <!-- Used 4 times in query history -->
+    <datastore-index kind="parkingspot" ancestor="false" source="auto">
+        <property name="owner" direction="asc"/>
+        <property name="longitude" direction="desc"/>
+    </datastore-index>
+
+>>>>>>> 654aabca3f3bd174c2e2348a4a495bc5e2fae15b
 </datastore-indexes>
