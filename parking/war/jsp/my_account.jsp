@@ -92,23 +92,16 @@
 		 		for (Entity booking : bookings) {
 		 			Map<String, String> bookingMap = new HashMap<String, String>();
 
-		 			bookingMap.put("user", booking.getProperty("user")
-		 					.toString());
-		 			bookingMap.put("latitude", booking.getProperty("latitude")
-		 					.toString());
-		 			bookingMap.put("longitude", booking
-		 					.getProperty("longitude").toString());
-		 			//bookingMap.put("start_date_ms", booking.getProperty("start_date_ms").toString());
-		 			//bookingMap.put("end_date_ms", booking.getProperty("end_date_ms").toString());
-		 			//bookingMap.put("reservation_date_ms", booking.getProperty("reservation_date_ms").toString());
-		 			bookingMap.put("address", booking.getProperty("address")
-		 					.toString());
-		 			bookingMap.put("start_date",
-		 					booking.getProperty("start_date").toString());
-		 			bookingMap.put("end_date", booking.getProperty("end_date")
-		 					.toString());
-		 			bookingMap.put("reservation_date",
-		 					booking.getProperty("reservation_date").toString());
+		 			bookingMap.put("user", booking.getProperty("user").toString());
+		 			bookingMap.put("latitude", booking.getProperty("latitude").toString());
+		 			bookingMap.put("longitude", booking.getProperty("longitude").toString());
+		 			bookingMap.put("start_date_ms", booking.getProperty("start_date_ms").toString());
+		 			bookingMap.put("end_date_ms", booking.getProperty("end_date_ms").toString());
+		 			bookingMap.put("reservation_date_ms", booking.getProperty("reservation_date_ms").toString());
+		 			bookingMap.put("address", booking.getProperty("address").toString());
+		 			bookingMap.put("start_date",booking.getProperty("start_date").toString());
+		 			bookingMap.put("end_date", booking.getProperty("end_date").toString());
+		 			bookingMap.put("reservation_date",booking.getProperty("reservation_date").toString());
 
 		 			bookingsList.add(bookingMap);
 
@@ -126,16 +119,11 @@
 		 		for (Entity parkingSpot : parkingSpots) {
 		 			Map<String, String> parkingSpotMap = new HashMap<String, String>();
 
-		 			parkingSpotMap.put("owner", parkingSpot
-		 					.getProperty("owner").toString());
-		 			parkingSpotMap.put("address",
-		 					parkingSpot.getProperty("address").toString());
-		 			parkingSpotMap.put("longitude",
-		 					parkingSpot.getProperty("longitude").toString());
-		 			parkingSpotMap.put("latitude",
-		 					parkingSpot.getProperty("latitude").toString());
-		 			parkingSpotMap.put("hourly_rate",
-		 					parkingSpot.getProperty("hourly_rate").toString());
+		 			parkingSpotMap.put("owner", parkingSpot.getProperty("owner").toString());
+		 			parkingSpotMap.put("address", parkingSpot.getProperty("address").toString());
+		 			parkingSpotMap.put("longitude",	parkingSpot.getProperty("longitude").toString());
+		 			parkingSpotMap.put("latitude", parkingSpot.getProperty("latitude").toString());
+		 			parkingSpotMap.put("hourly_rate", parkingSpot.getProperty("hourly_rate").toString());
 
 		 			parkingSpotsList.add(parkingSpotMap);
 
@@ -147,16 +135,16 @@
 		 	String outputString = "";
 
 		 	outputString += "<h3> Bookings </h3> ";
-		 	if (generateHTMLOutput(bookingsList) != null)
-		 		outputString += generateHTMLOutput(bookingsList);
+		 	if (generateHTMLOutput(bookingsList, "bookings") != null)
+		 		outputString += generateHTMLOutput(bookingsList, "bookings");
 		 	else
 		 		outputString += "<p>" + userName + " has no bookings </p> ";
 
 		 	outputString += " <br> ";
 
 		 	outputString += "<h3> Parking Spots </h3> ";
-		 	if (generateHTMLOutput(parkingSpotsList) != null)
-		 		outputString += generateHTMLOutput(parkingSpotsList);
+		 	if (generateHTMLOutput(parkingSpotsList, "parking spots") != null)
+		 		outputString += generateHTMLOutput(parkingSpotsList, "parking spots");
 		 	else
 		 		outputString += "<p>" + userName + " has no parking Spots</p> ";
 
@@ -187,7 +175,7 @@
           <%!
           //A method that takes a list of attributes and returns an 
           //html unsorted list string of these attributes
-          String generateHTMLOutput(List<Map<String, String>> attributesList){
+          String generateHTMLOutput(List<Map<String, String>> attributesList, String type){
         	  String outputString = "";
         	  
         	  if(attributesList.isEmpty()){
@@ -205,6 +193,21 @@
         				  outputString += key.toString() + ": " + attribute.get(key);
         				  outputString += "</li>";
         			  }
+        			  
+        			  //generate delete button
+        			  String key = ""; 
+        			  if (type.equals("bookings"))
+        				  key = "Booking%" + attribute.get("user") +"_" + attribute.get("start_date_ms") + "_" + attribute.get("end_date_ms") + "_" + attribute.get("address");
+        			  else if (type.equals("parking spots"))
+        				  key = "parkingspot%" + attribute.get("latitude") + "_" + attribute.get("longitude");
+        				
+        			  
+        			  outputString += "<form action=\"/delete_servlet/\" method=\"post\">";
+        			  outputString += "<input type=\"hidden\" name= \"key\" value=\"";
+        			  outputString += key + "\">";
+        			  outputString += "<input type=\"submit\" name=\"button1\" value=\"Delete\" />";
+        			  outputString += "</form>";
+        			  
         			  outputString += "</ul>";
         			  outputString += "</li>";
         		  }
@@ -215,6 +218,7 @@
           }          
           %>
           
+         
 			
 	<t:page_template>
 

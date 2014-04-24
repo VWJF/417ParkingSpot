@@ -76,7 +76,7 @@ public class ParkingServlet extends HttpServlet {
 	{
 		MakeBookingServlet bookingServlet = new MakeBookingServlet();
 		List<Entity> parkingSpots = getAllParkingSpots(new FilterPredicate("hourly_rate",FilterOperator.LESS_THAN_OR_EQUAL, hourly_rate));	
-		List<Entity> bookings = bookingServlet.getAllBookings(null);
+		List<Entity> bookings = bookingServlet.getAllBookings(null, null);
 		List<Entity> conflictBookings = new ArrayList<Entity>();
 		bookingServlet.checkConflicts(conflictBookings, bookings, start_date_ms, end_date_ms);
 
