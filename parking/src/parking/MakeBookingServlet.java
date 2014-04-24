@@ -97,10 +97,9 @@ public class MakeBookingServlet extends HttpServlet {
 			String booking_key = user +"_" + start_date_ms_str + "_" + end_date_ms_str +  "_" + address;
 			System.out.println("MakeBooking\nKind: Booking  Name: "+booking_key);
 			
-			Entity booking = new Entity("Booking", booking_key, parentParkingSpot.getKey() ); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
+			//Entity booking = new Entity("Booking", booking_key, parentParkingSpot.getKey() ); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
 
-
-			//Entity booking = new Entity("Booking", booking_key); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
+			Entity booking = new Entity("Booking", booking_key); //Note: booking.getKey() is an incomplete (unusable) key until a datastore.put(booking) occurs.
 			
 			System.out.println("Booking Key: "+booking.getKey());
 			System.out.println("Booking Key String: "+KeyFactory.keyToString(booking.getKey()));

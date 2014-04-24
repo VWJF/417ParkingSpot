@@ -30,7 +30,7 @@ public class DeleteServlet extends HttpServlet {
     	
     	String key_str = request.getParameter("key");
     	
-    	String[] parts = key_str.split(" ");
+    	String[] parts = key_str.split("%");
     	String kind = parts[0]; 
     	String name = parts[1]; 
     	
@@ -38,17 +38,14 @@ public class DeleteServlet extends HttpServlet {
     	
     	if(kind.equals("Booking")){
     		
-    		for(int i = 2; i < key_str.split(" ").length; i++)
-    			name += " " + parts[i];
-    		
     		Key key = KeyFactory.createKey(kind, name);
         	System.out.println("Booking Key: "+ key);
         	System.out.println("Booking Key (String): "+ KeyFactory.keyToString(key));
         	
         	Query query = new Query(kind, key);
         	List<Entity> aUserBooking = datastore.prepare(query).asList(FetchOptions.Builder.withLimit(10));
-        	datastore.delete(aUserBooking.get(0).getKey()); 
         	System.out.println("Query size!!!: " + aUserBooking.size());
+        	datastore.delete(aUserBooking.get(0).getKey()); 
     	}
     	else if(kind.equals("parkingspot")){
     		Key key = KeyFactory.createKey(kind, name);

@@ -197,9 +197,9 @@
         			  //generate delete button
         			  String key = ""; 
         			  if (type.equals("bookings"))
-        				  key = "Booking " + attribute.get("user") +"_" + attribute.get("start_date_ms") + "_" + attribute.get("end_date_ms") + "_" + attribute.get("address");
+        				  key = "Booking%" + attribute.get("user") +"_" + attribute.get("start_date_ms") + "_" + attribute.get("end_date_ms") + "_" + attribute.get("address");
         			  else if (type.equals("parking spots"))
-        				  key = "parkingspot " + attribute.get("latitude") + "_" + attribute.get("longitude");
+        				  key = "parkingspot%" + attribute.get("latitude") + "_" + attribute.get("longitude");
         				
         			  
         			  outputString += "<form action=\"/delete_servlet/\" method=\"post\">";
